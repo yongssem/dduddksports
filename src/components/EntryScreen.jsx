@@ -27,8 +27,8 @@ export default function EntryScreen() {
 
       {/* UI overlay — pointer-events-none so canvas drag works */}
       <div className="relative z-10 min-h-dvh flex flex-col items-center justify-center p-4 sm:p-6 pointer-events-none">
-        <div className="absolute inset-0 bg-black/0 sm:bg-black/10 pointer-events-none" />
-        <div className="relative w-full max-w-xl p-3 sm:p-4 rounded-3xl bg-white/05 sm:bg-white/10 backdrop-blur-sm sm:backdrop-blur-lg border border-white/10 sm:border-white/15">
+        {/* 배경용 반투명 카드 제거하여 트랙 노출 강화 */}
+        <div className="absolute inset-0" />
         {/* Hero section */}
         <div className="text-center mb-8 entry-fade-in">
           <div className="relative inline-block">
@@ -90,7 +90,6 @@ export default function EntryScreen() {
         <div className="mt-auto pt-8 pointer-events-auto">
           <Footer variant="dark" />
         </div>
-      </div>
       </div>
     </div>
   )
