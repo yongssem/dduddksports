@@ -38,7 +38,7 @@ export default function EntryScreen() {
             <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight mt-2 drop-shadow-lg font-display">
               뚝딱<span className="text-gradient-orange" style={{WebkitTextFillColor: 'unset', color: '#FFB088'}}>체력</span>
             </h1>
-            <p className="text-white/50 mt-2 text-xs sm:text-sm font-medium tracking-widest uppercase">DDuk-DDak Fitness · 건강체력교실</p>
+            <p className="text-white/60 mt-2 text-xs sm:text-sm font-medium tracking-wide">PAPS 1등급을 향한 체력 성장 프로젝트</p>
           </div>
 
           {/* Feature pills */}
