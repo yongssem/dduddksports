@@ -26,11 +26,13 @@ export default function EntryScreen() {
       <GradeRunnerBackground />
 
       {/* UI overlay — pointer-events-none so canvas drag works */}
-      <div className="relative z-10 min-h-dvh flex flex-col items-center justify-center p-4 sm:p-6 pointer-events-none">
-        {/* 배경용 반투명 카드 제거하여 트랙 노출 강화 */}
-        <div className="absolute inset-0" />
-        {/* Hero section */}
-        <div className="text-center mb-8 entry-fade-in">
+      <div className="relative z-10 min-h-dvh flex items-center justify-center p-4 sm:p-6 pointer-events-none">
+        {/* 센터 중앙: 녹색 잔디 위에만 약간의 반투명 카드 */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[90vw] max-w-xl h-[55vh] bg-white/10 backdrop-blur-sm rounded-3xl border border-white/15" />
+        </div>
+        <div className="relative z-10 w-full max-w-xl flex flex-col items-center justify-center gap-6">
+          <div className="text-center mb-8 entry-fade-in">
           <div className="relative inline-block">
             <div className="text-[5.5rem] leading-none entry-float drop-shadow-lg">🏆</div>
             <div className="absolute -top-1 -right-3 text-2xl entry-sparkle">✨</div>
@@ -92,5 +94,6 @@ export default function EntryScreen() {
         </div>
       </div>
     </div>
+  </div>
   )
 }
