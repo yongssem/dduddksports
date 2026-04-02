@@ -18,10 +18,10 @@ const GRADES = [
 ];
 
 const COLORS = {
-  grass1: '#3B9B5A',
+  grass1: '#3B9B5A', // inner field grass
   track: '#C85A38',
   trackDark: '#A84D30',
-  sand: '#E8D5A3',
+  sand: '#E8D5A3',  // outer background sand
   sandDark: '#D9C48E',
   sandLight: '#F0E2BA',
   lane: 'rgba(255,255,255,0.35)',
@@ -661,9 +661,9 @@ export default function GradeRunnerBackground() {
   const initTextParticles = useCallback((W, H) => {
     const particles = [];
     const zoneH = H / 5;
-    const fontSize = 12;
-    const lineHeight = fontSize + 9;   // more vertical space
-    const baseWordGap = 12;            // horizontal gap between words
+    const fontSize = 16;
+    const lineHeight = fontSize + 12;   // more vertical space for readability
+    const baseWordGap = 14;            // horizontal gap between words
 
     for (let gi = 0; gi < 5; gi++) {
       const grade = GRADES[gi];
@@ -749,12 +749,12 @@ export default function GradeRunnerBackground() {
     function drawField() {
       const { W, H, cx, cy, halfW, halfH, fieldHW, fieldHH, laneWidth } = S;
 
-      // 1. Grass background
-      ctx.fillStyle = COLORS.grass1;
+      // 1. Outer sand background (원래 잔디)
+      ctx.fillStyle = COLORS.sand;
       ctx.fillRect(0, 0, W, H);
-      // Mowing stripes
+      // Mowing stripe 처럼 살짝 밝은 레이어 
       for (let y = 0; y < H; y += 20) {
-        ctx.fillStyle = y % 40 === 0 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.025)';
+        ctx.fillStyle = y % 40 === 0 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)';
         ctx.fillRect(0, y, W, 20);
       }
 
@@ -812,15 +812,15 @@ export default function GradeRunnerBackground() {
         ctx.fillRect(cx - halfW, sy - 2, halfW * 2, 4);
       }
 
-      // 4. Inner field (sand/dirt)
+      // 4. Inner field (grass) — 교체된 배경 스타일
       stadiumPath(ctx, cx, cy, fieldHW, fieldHH);
-      ctx.fillStyle = COLORS.sand;
+      ctx.fillStyle = COLORS.grass1;
       ctx.fill();
-      // Sand gradient
+      // Grass gradient
       const sGrad = ctx.createRadialGradient(cx, cy * 0.92, 0, cx, cy, Math.max(fieldHW, fieldHH));
-      sGrad.addColorStop(0, COLORS.sandLight + '50');
-      sGrad.addColorStop(0.8, 'rgba(0,0,0,0)');
-      sGrad.addColorStop(1, COLORS.sandDark + '30');
+      sGrad.addColorStop(0, COLORS.grass1 + '80');
+      sGrad.addColorStop(0.8, 'rgba(255,255,255,0)');
+      sGrad.addColorStop(1, 'rgba(0,0,0,0.08)');
       stadiumPath(ctx, cx, cy, fieldHW, fieldHH);
       ctx.fillStyle = sGrad;
       ctx.fill();
@@ -885,13 +885,13 @@ export default function GradeRunnerBackground() {
         const dOuter = stadiumDist(p.x, p.y, cx, cy, halfW, halfH);
         const dField = stadiumDist(p.x, p.y, cx, cy, fieldHW, fieldHH);
 
-        let baseAlpha = 0.18;
+        let baseAlpha = 0.25;
         if (dField <= 1) {
           // Sand field 조금 낮게
-          baseAlpha = 0.12;
+          baseAlpha = 0.20;
         } else if (dOuter <= 1) {
-          // Track 부분 좀 더 또렷하게
-          baseAlpha = 0.22;
+          // Track 부분 더 강하게
+          baseAlpha = 0.25;
         }
 
         const GRADIENT_COLORS = ['#FFD166', '#81C784', '#FFFFFF', '#FFAB40', '#FF6F61'];
@@ -921,15 +921,13 @@ export default function GradeRunnerBackground() {
       const gi = getGradeAtY(S.runnerY, S.H);
       const g = GRADES[gi];
       const bx = S.runnerX;
-      const by = S.runnerY - 105;
+    const by = S.runnerY - 150;  // 머리 위로 더 이동
 
-      ctx.save();
-      ctx.font = `700 14px ${FONT}`;
-      const pw = ctx.measureText(g.label).width + 24;
-      const ph = 30;
-      const r = 10;
-
-      ctx.shadowColor = 'rgba(0,0,0,0.25)';
+    ctx.save();
+    ctx.font = `900 20px ${FONT}`;
+    const pw = ctx.measureText(g.label).width + 30;
+    const ph = 38;
+    const r = 12;
       ctx.shadowBlur = 10;
       ctx.shadowOffsetY = 3;
       ctx.fillStyle = g.color + 'DD';
@@ -1006,16 +1004,20 @@ export default function GradeRunnerBackground() {
       S.frameTick++;
       if (S.frameTick >= 6) { S.frameTick = 0; S.frameIndex = (S.frameIndex + 1) % 6; }
 
-      // Idle orbit when not dragging
       if (!S.dragging) {
+        // Idle orbit when not dragging
         S.targetAngle += 0.0028;
+        S.targetX = S.trackCx + Math.cos(S.targetAngle) * S.trackRx;
+        S.targetY = S.trackCy + Math.sin(S.targetAngle) * S.trackRy;
+
+        // idle 모드에서는 부드럽게 순항
+        S.runnerX += (S.targetX - S.runnerX) * 0.14;
+        S.runnerY += (S.targetY - S.runnerY) * 0.14;
+      } else {
+        // 드래그 중에는 포인터 위치에 즉시 린치
+        S.runnerX = S.targetX;
+        S.runnerY = S.targetY;
       }
-
-      S.targetX = S.trackCx + Math.cos(S.targetAngle) * S.trackRx;
-      S.targetY = S.trackCy + Math.sin(S.targetAngle) * S.trackRy;
-
-      S.runnerX += (S.targetX - S.runnerX) * 0.16;
-      S.runnerY += (S.targetY - S.runnerY) * 0.16;
       S.runnerX = Math.max(60, Math.min(S.W - 60, S.runnerX));
       S.runnerY = Math.max(50, Math.min(S.H - 50, S.runnerY));
 
@@ -1028,23 +1030,34 @@ export default function GradeRunnerBackground() {
 
     // ── Pointer events ──
     function onDown(e) {
-      S.mouseDown = true;
-      S.dragging = true;
-      const dx = e.clientX - S.trackCx;
-      const dy = e.clientY - S.trackCy;
-      S.targetAngle = Math.atan2(dy, dx);
-      S.dragStartX = e.clientX;
-      S.dragStartAngle = S.targetAngle;
-      canvas.classList.add('grabbing');
-      canvas.setPointerCapture(e.pointerId);
+      const dx = e.clientX - S.runnerX;
+      const dy = e.clientY - S.runnerY;
+      const dist = Math.hypot(dx, dy);
+      // 캐릭터를 클릭했을 때만 드래그 시작
+      if (dist <= 70) {
+        S.dragging = true;
+        const odx = e.clientX - S.trackCx;
+        const ody = e.clientY - S.trackCy;
+        S.targetAngle = Math.atan2(ody, odx);
+        S.targetX = S.trackCx + Math.cos(S.targetAngle) * S.trackRx;
+        S.targetY = S.trackCy + Math.sin(S.targetAngle) * S.trackRy;
+        canvas.classList.add('grabbing');
+        canvas.setPointerCapture(e.pointerId);
+      }
     }
     function onMove(e) {
       if (!S.dragging) return;
-      const deltaX = e.clientX - S.dragStartX;
-      S.targetAngle = S.dragStartAngle + deltaX * 0.005;
+      const dx = e.clientX - S.trackCx;
+      const dy = e.clientY - S.trackCy;
+      const angle = Math.atan2(dy, dx);
+      S.targetAngle = angle;
+      S.targetX = S.trackCx + Math.cos(S.targetAngle) * S.trackRx;
+      S.targetY = S.trackCy + Math.sin(S.targetAngle) * S.trackRy;
+      // 드래그 중에는 카운팅 없이 바로 따라감
+      S.runnerX = S.targetX;
+      S.runnerY = S.targetY;
     }
     function onUp() {
-      S.mouseDown = false;
       S.dragging = false;
       canvas.classList.remove('grabbing');
     }

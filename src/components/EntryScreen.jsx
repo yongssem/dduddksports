@@ -26,7 +26,9 @@ export default function EntryScreen() {
       <GradeRunnerBackground />
 
       {/* UI overlay — pointer-events-none so canvas drag works */}
-      <div className="relative z-10 min-h-dvh flex flex-col items-center justify-center p-6 pointer-events-none bg-black/20 backdrop-blur-xl">
+      <div className="relative z-10 min-h-dvh flex flex-col items-center justify-center p-6 pointer-events-none">
+        <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+        <div className="relative w-full max-w-xl p-4 rounded-3xl bg-white/10 backdrop-blur-lg border border-white/15">
         {/* Hero section */}
         <div className="text-center mb-8 entry-fade-in">
           <div className="relative inline-block">
@@ -88,6 +90,7 @@ export default function EntryScreen() {
         <div className="mt-auto pt-8 pointer-events-auto">
           <Footer variant="dark" />
         </div>
+      </div>
       </div>
     </div>
   )
