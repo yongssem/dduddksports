@@ -52,7 +52,8 @@ export default function TeacherAuth() {
       navigate('/teacher/dashboard')
     } catch (err) {
       if (err.code === 'auth/popup-closed-by-user') return
-      setError('Google 로그인에 실패했습니다.')
+      console.error('Google login error:', err.code, err.message)
+      setError(`Google 로그인 실패: ${err.code || err.message}`)
     } finally {
       setLoading(false)
     }
