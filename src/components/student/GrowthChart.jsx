@@ -58,7 +58,7 @@ export default function GrowthChart() {
 
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* Event tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-1 no-scrollbar">
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar -mx-4 px-4">
           {events.map(event => {
             const icon = EVENT_ICONS[event.name] || '🎯'
             const isSelected = selectedEventId === event.id

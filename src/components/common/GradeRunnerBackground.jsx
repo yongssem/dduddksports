@@ -29,8 +29,24 @@ const COLORS = {
 };
 
 const PALETTE = {
-  1: '#FFD5A8', 2: '#3A2A1A', 3: '#5DCAA5',
-  4: '#2C3E6B', 5: '#E8E8E8', 6: '#1A1A2E', 7: '#CC4444',
+  skin: '#F5C9A0',      // 밝은 피부
+  skinShade: '#E0A878',  // 피부 그림자
+  skinHi: '#FDDDC0',    // 피부 하이라이트
+  hair: '#8B6B4A',       // 머리카락
+  hairDark: '#6B4F35',   // 머리카락 어두운
+  hairLight: '#A88B6A',  // 머리카락 밝은
+  eye: '#2C2C3A',        // 눈동자
+  eyeWhite: '#FFFFFF',   // 흰자
+  eyeBrow: '#5C4030',    // 눈썹
+  mouth: '#CC5555',      // 입
+  shirt: '#F0F0F0',      // 흰 민소매
+  shirtShade: '#D8D8D8', // 셔츠 그림자
+  shirtHi: '#FFFFFF',    // 셔츠 하이라이트
+  pants: '#E8DCC8',      // 베이지 반바지
+  pantsShade: '#D4C8B0', // 반바지 그림자
+  shoes: '#2A2A2A',      // 검정 신발
+  shoesHi: '#444444',    // 신발 하이라이트
+  outline: '#3A2820',    // 외곽선
 };
 
 function getGradeAtY(y, H) {
@@ -105,68 +121,513 @@ function drawPixelChar(ctx, x, y, scale, bodyType, frameIndex) {
 
   const s = PX * scale;
   const t = bodyType;
-  const belly = t * 1.5;
-  const legSpread = t * 0.3;
+  // 5등급(t=4)은 훨씬 더 뚱뚱하게
+  const belly = t <= 2 ? t * 1.0 : (t === 3 ? 4.0 : 7.0);
 
   const phase = (frameIndex / 6) * Math.PI * 2;
-  const legSwing = Math.sin(phase) * (12 - t);
-  const armSwing = Math.sin(phase + Math.PI) * (10 - t * 0.5);
-  const bounce = Math.abs(Math.sin(phase)) * (3 - t * 0.3);
+  const legSwing = Math.sin(phase) * (14 - t * 1.5);
+  const armSwing = Math.sin(phase + Math.PI) * (12 - t * 0.8);
+  // 뚱뚱할수록 바운스 줄어듦
+  const bounce = Math.abs(Math.sin(phase)) * (3.5 - t * 0.6);
 
   ctx.translate(0, -bounce * s / PX);
 
-  const skin = PALETTE[1], hair = PALETTE[2], shirt = PALETTE[3];
-  const pants = PALETTE[4], shoes = PALETTE[5], eye = PALETTE[6], band = PALETTE[7];
+  const P = PALETTE;
 
-  const rect = (px, py, pw, ph, color) => {
+  const px = (bx, by, color) => {
     ctx.fillStyle = color;
-    ctx.fillRect(px * s, py * s, pw * s, ph * s);
+    ctx.fillRect(bx * s, by * s, s, s);
+  };
+  const rect = (bx, by, w, h, color) => {
+    ctx.fillStyle = color;
+    ctx.fillRect(bx * s, by * s, w * s, h * s);
   };
 
-  const headX = -3, headY = -14 - (t > 2 ? 0.5 : 0);
-  rect(headX, headY, 6, 2, hair);
-  rect(headX - 0.5, headY + 0.5, 7, 2, hair);
-  rect(headX, headY + 2, 6, 1, band);
-  rect(headX, headY + 3, 6, 3, skin);
-  rect(headX + 1, headY + 3.5, 1, 1, eye);
-  rect(headX + 4, headY + 3.5, 1, 1, eye);
-  rect(headX + 1, headY + 5, 4, 0.5, skin);
-  rect(-1, headY + 6, 2, 1, skin);
+  // ══════════════════════════════════════
+  // ── HAIR ──
+  // ══════════════════════════════════════
+  const hY = -18 - (t > 2 ? 0.5 : 0);
 
-  const torsoTop = headY + 7;
-  const torsoW = 4 + belly;
-  const torsoH = 5 + t * 0.8;
-  const torsoX = -torsoW / 2;
-  rect(torsoX, torsoTop, torsoW, torsoH, shirt);
-  if (t >= 3) { ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect((torsoX + 1) * s, (torsoTop + 1) * s, (torsoW - 2) * s, (torsoH - 2) * s); }
-  if (t === 0) { ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fillRect(-0.3 * s, torsoTop * s, 0.6 * s, torsoH * s); }
-  if (t <= 1) { rect(torsoX - 0.8, torsoTop, 1, 2, shirt); rect(torsoX + torsoW - 0.2, torsoTop, 1, 2, shirt); }
+  if (t === 0) {
+    // 1등급: 멋진 스파이크 헤어 + 하이라이트
+    px(-1, hY - 1, P.hairLight); px(1, hY - 1, P.hair); // 뾰족 튀어나온 앞머리
+    px(-3, hY, P.hairDark); px(-2, hY, P.hair); px(-1, hY, P.hairLight); px(0, hY, P.hair); px(1, hY, P.hairLight); px(2, hY, P.hair);
+    rect(-4, hY+1, 9, 1, P.hair); px(5, hY+1, P.hairLight);
+    px(-4, hY+2, P.hairDark); rect(-3, hY+2, 9, 1, P.hair); px(6, hY+2, P.hairLight);
+    px(-4, hY+3, P.hairDark); rect(-3, hY+3, 9, 1, P.hair); px(6, hY+3, P.hairDark);
+    // 사이드번
+    px(-4, hY+4, P.hairDark); px(-3, hY+4, P.hair);
+    px(5, hY+4, P.hair); px(6, hY+4, P.hairDark);
+    // 하이라이트 반짝
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(-1 * s, (hY+1) * s, 2 * s, 0.5 * s);
+  } else {
+    // 일반 / 뚱뚱 헤어
+    px(-2, hY, P.hairLight); px(-1, hY, P.hair); px(0, hY, P.hairLight); px(1, hY, P.hair);
+    rect(-3, hY+1, 7, 1, P.hair); px(4, hY+1, P.hairLight);
+    px(-4, hY+2, P.hairDark); rect(-3, hY+2, 8, 1, P.hair); px(5, hY+2, P.hairLight);
+    px(-4, hY+3, P.hairDark); rect(-3, hY+3, 8, 1, P.hair); px(5, hY+3, P.hairDark);
+    px(-4, hY+4, P.hairDark); px(-3, hY+4, P.hair);
+    px(4, hY+4, P.hair); px(5, hY+4, P.hairDark);
+  }
 
-  const armY = torsoTop + 1;
-  const armLen = 4 + (t === 0 ? 0.5 : 0);
-  const armThick = t >= 3 ? 1.5 : 1;
-  ctx.save(); ctx.translate((torsoX - 0.5) * s, armY * s); ctx.rotate(armSwing * Math.PI / 180 * 3); ctx.fillStyle = skin; ctx.fillRect(-armThick * s, 0, armThick * s, armLen * s); ctx.restore();
-  ctx.save(); ctx.translate((torsoX + torsoW + 0.5) * s, armY * s); ctx.rotate(-armSwing * Math.PI / 180 * 3); ctx.fillStyle = skin; ctx.fillRect(0, 0, armThick * s, armLen * s); ctx.restore();
+  // ══════════════════════════════════════
+  // ── FACE ──
+  // ══════════════════════════════════════
+  const fY = hY + 4;
+  // 뚱뚱할수록 얼굴 넓어짐
+  const faceExtra = t >= 4 ? 1 : (t >= 3 ? 0.5 : 0);
 
-  const pantsTop = torsoTop + torsoH;
-  const pantsW = torsoW - (t >= 3 ? 0 : 0.5);
-  const pantsX = -pantsW / 2;
-  const pantsH = 3 + t * 0.3;
-  rect(pantsX, pantsTop, pantsW, pantsH * 0.5, pants);
+  rect(-2 - faceExtra, fY, 6 + faceExtra * 2, 1, P.skinHi);
+  rect(-3 - faceExtra, fY+1, 8 + faceExtra * 2, 1, P.skin);
+  rect(-3 - faceExtra, fY+2, 8 + faceExtra * 2, 1, P.skin);
+  rect(-3 - faceExtra, fY+3, 8 + faceExtra * 2, 1, P.skin);
+  rect(-2 - faceExtra, fY+4, 6 + faceExtra * 2, 1, P.skinShade);
+  rect(-1, fY+5, 4, 1, P.skinShade);
 
-  const legTop = pantsTop + pantsH * 0.4;
-  const legLen = 5 - t * 0.2;
-  const legThick = 1 + t * 0.4;
-  [[-1 - legSpread, legSwing], [1 + legSpread, -legSwing]].forEach(([offX, swing]) => {
-    ctx.save(); ctx.translate(offX * s, legTop * s); ctx.rotate(swing * Math.PI / 180 * 2);
-    ctx.fillStyle = pants; ctx.fillRect(-legThick / 2 * s, 0, legThick * s, legLen * 0.6 * s);
-    ctx.fillStyle = skin; ctx.fillRect(-legThick / 2 * s, legLen * 0.5 * s, legThick * s, legLen * 0.4 * s);
-    ctx.fillStyle = shoes; ctx.fillRect((-legThick / 2 - 0.3) * s, legLen * 0.9 * s, (legThick + 0.8) * s, 1.2 * s);
+  // 5등급: 이중턱
+  if (t >= 4) {
+    rect(-1.5, fY+5, 5, 0.8, P.skinShade);
+    rect(-1, fY+5.5, 4, 0.8, P.skin);
+  }
+
+  // 귀
+  px(-4 - faceExtra, fY+2, P.skin); px(-4 - faceExtra, fY+3, P.skinShade);
+  px(5 + faceExtra, fY+2, P.skin); px(5 + faceExtra, fY+3, P.skinShade);
+
+  // ── 눈썹 ──
+  if (t === 0) {
+    // 1등급: 자신감 있는 각진 눈썹
+    ctx.fillStyle = P.eyeBrow;
+    ctx.fillRect(-2.5 * s, (fY+0.8) * s, 2.5 * s, 0.6 * s);
+    ctx.fillRect(2 * s, (fY+0.8) * s, 2.5 * s, 0.6 * s);
+  } else if (t >= 4) {
+    // 5등급: 걱정스러운 올라간 눈썹
+    ctx.save();
+    ctx.translate(-1.5 * s, (fY+1) * s); ctx.rotate(-0.15);
+    ctx.fillStyle = P.eyeBrow; ctx.fillRect(0, 0, 2 * s, 0.5 * s);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(2.5 * s, (fY+1) * s); ctx.rotate(0.15);
+    ctx.fillStyle = P.eyeBrow; ctx.fillRect(0, 0, 2 * s, 0.5 * s);
+    ctx.restore();
+  } else {
+    rect(-2, fY+1, 2, 0.6, P.eyeBrow);
+    rect(2, fY+1, 2, 0.6, P.eyeBrow);
+  }
+
+  // ── 눈 ──
+  if (t === 0) {
+    // 1등급: 반짝이는 큰 눈, 윙크
+    px(-2, fY+2, P.eyeWhite); px(-1, fY+2, P.eye);
+    // 오른쪽 윙크 (> 모양)
+    ctx.fillStyle = P.eye;
+    ctx.fillRect(2 * s, (fY+2.2) * s, 1.5 * s, 0.3 * s);
+    ctx.fillRect(2.3 * s, (fY+1.9) * s, 0.8 * s, 0.3 * s);
+    ctx.fillRect(2.3 * s, (fY+2.5) * s, 0.8 * s, 0.3 * s);
+    // 큰 하이라이트
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(-1.6 * s, (fY+1.5) * s, 0.6 * s, 0.6 * s);
+    ctx.fillRect(-0.8 * s, (fY+2.3) * s, 0.3 * s, 0.3 * s);
+  } else if (t >= 4) {
+    // 5등급: 지친 눈 (반쯤 감김)
+    ctx.fillStyle = P.eyeWhite;
+    ctx.fillRect(-2 * s, (fY+2.2) * s, s, 0.6 * s);
+    ctx.fillRect(2.5 * s, (fY+2.2) * s, s, 0.6 * s);
+    ctx.fillStyle = P.eye;
+    ctx.fillRect(-1.5 * s, (fY+2.3) * s, 0.6 * s, 0.5 * s);
+    ctx.fillRect(3 * s, (fY+2.3) * s, 0.6 * s, 0.5 * s);
+    // 감긴 눈꺼풀
+    ctx.fillStyle = P.skinShade;
+    ctx.fillRect(-2.2 * s, (fY+1.8) * s, 1.5 * s, 0.5 * s);
+    ctx.fillRect(2.3 * s, (fY+1.8) * s, 1.5 * s, 0.5 * s);
+  } else {
+    px(-2, fY+2, P.eyeWhite); px(-1, fY+2, P.eye);
+    px(2, fY+2, P.eyeWhite); px(3, fY+2, P.eye);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(-1.6 * s, (fY+1.7) * s, 0.4 * s, 0.4 * s);
+    ctx.fillRect(2.4 * s, (fY+1.7) * s, 0.4 * s, 0.4 * s);
+  }
+
+  // ── 코 ──
+  ctx.fillStyle = P.skinShade;
+  ctx.fillRect(0.3 * s, (fY+3) * s, 0.6 * s, 0.5 * s);
+
+  // ── 입 ──
+  if (t === 0) {
+    // 1등급: 활짝 웃는 큰 미소 + 이 드러남
+    ctx.fillStyle = P.mouth;
+    ctx.beginPath();
+    ctx.arc(1 * s, (fY+4) * s, 1.8 * s, 0, Math.PI);
+    ctx.fill();
+    // 이빨
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(-0.3 * s, (fY+3.9) * s, 2.6 * s, 0.6 * s);
+    // 윗입술
+    ctx.fillStyle = P.mouth;
+    ctx.fillRect(-0.5 * s, (fY+3.8) * s, 3 * s, 0.3 * s);
+  } else if (t >= 4) {
+    // 5등급: 헥헥 벌어진 입
+    ctx.fillStyle = '#1A1A1A';
+    ctx.beginPath();
+    ctx.ellipse(1 * s, (fY+4.2) * s, 1.3 * s, 0.8 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 혀
+    ctx.fillStyle = '#E06060';
+    ctx.beginPath();
+    ctx.ellipse(1 * s, (fY+4.5) * s, 0.8 * s, 0.4 * s, 0, 0, Math.PI);
+    ctx.fill();
+  } else if (t === 3) {
+    // 4등급: 살짝 찡그린 입
+    ctx.fillStyle = P.mouth;
+    ctx.fillRect(-0.3 * s, (fY+4) * s, 2 * s, 0.4 * s);
+  } else {
+    // 기본 미소
+    ctx.fillStyle = P.mouth;
+    ctx.fillRect(-0.5 * s, (fY+3.8) * s, 2.5 * s, 0.5 * s);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0 * s, (fY+3.8) * s, 1.5 * s, 0.3 * s);
+  }
+
+  // ── 볼터치 ──
+  if (t === 0) {
+    // 건강한 핑크빛
+    ctx.fillStyle = 'rgba(255,150,150,0.35)';
+    ctx.fillRect(-3 * s, (fY+3) * s, 1.5 * s, 1 * s);
+    ctx.fillRect(3 * s, (fY+3) * s, 1.5 * s, 1 * s);
+  } else if (t >= 4) {
+    // 붉은 홍조 (더위)
+    ctx.fillStyle = 'rgba(255,80,80,0.4)';
+    ctx.fillRect((-3 - faceExtra) * s, (fY+3) * s, 2 * s, 1 * s);
+    ctx.fillRect((3 + faceExtra - 0.5) * s, (fY+3) * s, 2 * s, 1 * s);
+  } else {
+    ctx.fillStyle = 'rgba(255,130,130,0.3)';
+    ctx.fillRect(-3 * s, (fY+3) * s, 1.5 * s, 0.8 * s);
+    ctx.fillRect(3 * s, (fY+3) * s, 1.5 * s, 0.8 * s);
+  }
+
+  // 얼굴 외곽선
+  ctx.fillStyle = P.outline + '40';
+  for (let i = 1; i <= 3; i++) ctx.fillRect((-3.2 - faceExtra) * s, (fY+i) * s, 0.2 * s, s);
+  for (let i = 1; i <= 3; i++) ctx.fillRect((5 + faceExtra) * s, (fY+i) * s, 0.2 * s, s);
+  ctx.fillRect(-1 * s, (fY+5) * s, 4 * s, 0.2 * s);
+
+  // ══════════════════════════════════════
+  // ── NECK ──
+  // ══════════════════════════════════════
+  const neckW = t >= 4 ? 3.5 : (t >= 3 ? 2.5 : 2);
+  rect(-neckW/2 + 1, fY+5.5, neckW, 1.5, P.skin);
+  rect(-neckW/2 + 1, fY+6, neckW, 0.5, P.skinShade);
+
+  // ══════════════════════════════════════
+  // ── BODY / SHIRT ──
+  // ══════════════════════════════════════
+  const bTop = fY + 7;
+  const bW = 5 + belly;
+  const bH = 5.5 + t * 1.0;
+  const bX = -bW / 2 + 1;
+
+  if (t === 0) {
+    // ★ 1등급: 쿨한 스포츠 재킷 (파란색 + 흰 줄)
+    const jacketColor = '#2266CC';
+    const jacketDark = '#1A4FA0';
+    const jacketLight = '#3388EE';
+    const stripe = '#FFFFFF';
+
+    rect(bX, bTop, bW, bH, jacketColor);
+    // 오른쪽 그림자
+    rect(bX + bW * 0.7, bTop, bW * 0.3, bH, jacketDark);
+    // 왼쪽 하이라이트
+    rect(bX + 0.3, bTop + 0.3, 1, bH - 0.6, jacketLight);
+    // 지퍼 중앙선
+    ctx.fillStyle = '#AAAAAA';
+    ctx.fillRect((bX + bW/2 - 0.15) * s, bTop * s, 0.3 * s, bH * s);
+    // 어깨 흰 줄
+    rect(bX, bTop, bW, 0.6, stripe);
+    rect(bX, bTop + bH - 0.6, bW, 0.6, stripe);
+    // 옷깃 / V넥
+    ctx.fillStyle = stripe;
+    ctx.fillRect((bX + bW/2 - 1) * s, bTop * s, 2 * s, 1.5 * s);
+    // 안쪽 셔츠
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect((bX + bW/2 - 0.6) * s, (bTop + 0.3) * s, 1.2 * s, 1.2 * s);
+    // 가슴 근육 라인
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.fillRect((bX + bW*0.3) * s, (bTop + 1.5) * s, 0.3 * s, (bH - 3) * s);
+    ctx.fillRect((bX + bW*0.65) * s, (bTop + 1.5) * s, 0.3 * s, (bH - 3) * s);
+    // 외곽선
+    ctx.strokeStyle = '#1A3A70';
+    ctx.lineWidth = 0.6;
+    ctx.strokeRect(bX * s, bTop * s, bW * s, bH * s);
+  } else if (t >= 4) {
+    // ★ 5등급: 배가 튀어나온 늘어난 회색 티셔츠
+    const fatShirt = '#CCCCCC';
+    const fatShirtDark = '#AAAAAA';
+
+    rect(bX, bTop, bW, bH, fatShirt);
+    rect(bX + bW * 0.6, bTop, bW * 0.4, bH, fatShirtDark);
+    // 배 튀어나옴 (둥글게)
+    ctx.fillStyle = fatShirt;
+    ctx.beginPath();
+    ctx.ellipse((bX + bW/2) * s, (bTop + bH * 0.65) * s, (bW * 0.55) * s, (bH * 0.45) * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 배 하이라이트
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath();
+    ctx.ellipse((bX + bW/2 - 0.5) * s, (bTop + bH * 0.55) * s, (bW * 0.3) * s, (bH * 0.25) * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 배꼽 비침
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.fillRect((bX + bW/2 - 0.2) * s, (bTop + bH * 0.7) * s, 0.4 * s, 0.4 * s);
+    // 옷 밑단이 올라감
+    ctx.fillStyle = P.skin;
+    ctx.fillRect((bX + 1) * s, (bTop + bH - 0.8) * s, (bW - 2) * s, 0.8 * s);
+    // 외곽선
+    ctx.strokeStyle = P.outline + '25';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(bX * s, bTop * s, bW * s, bH * s);
+  } else if (t >= 3) {
+    // 4등급: 약간 빡빡한 티셔츠
+    rect(bX, bTop, bW, bH, '#DDDDDD');
+    rect(bX + bW * 0.65, bTop, bW * 0.35, bH, '#C5C5C5');
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.beginPath();
+    ctx.ellipse((bX + bW/2) * s, (bTop + bH * 0.6) * s, (bW * 0.4) * s, (bH * 0.35) * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = P.outline + '25';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(bX * s, bTop * s, bW * s, bH * s);
+  } else {
+    // 2~3등급: 기본 민소매
+    rect(bX, bTop, bW, bH, P.shirt);
+    rect(bX + bW * 0.65, bTop, bW * 0.35, bH, P.shirtShade);
+    rect(bX + 0.5, bTop + 0.5, 1.5, bH - 1, P.shirtHi);
+    ctx.fillStyle = P.shirtShade;
+    ctx.fillRect((bX + 1) * s, bTop * s, (bW - 2) * s, 0.3 * s);
+    rect(bX, bTop, 1.5, 1, P.shirt);
+    rect(bX + bW - 1.5, bTop, 1.5, 1, P.shirt);
+    ctx.strokeStyle = P.outline + '30';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(bX * s, bTop * s, bW * s, bH * s);
+  }
+
+  // ══════════════════════════════════════
+  // ── ARMS ──
+  // ══════════════════════════════════════
+  const armY = bTop + 0.8;
+  const armLen = t === 0 ? 5.5 : (5 - t * 0.15);
+  const armThick = t >= 4 ? 2.2 : (t >= 3 ? 1.8 : (t === 0 ? 1.4 : 1.2));
+
+  // Left arm
+  ctx.save();
+  ctx.translate((bX - 0.3) * s, armY * s);
+  ctx.rotate(armSwing * Math.PI / 180 * 3);
+  if (t === 0) {
+    // 재킷 소매
+    ctx.fillStyle = '#2266CC';
+    ctx.fillRect(-armThick * s, 0, armThick * s, armLen * 0.35 * s);
+    ctx.fillStyle = '#1A4FA0';
+    ctx.fillRect(-armThick * s, 0, 0.3 * s, armLen * 0.35 * s);
+  }
+  ctx.fillStyle = P.skin;
+  ctx.fillRect(-armThick * s, (t === 0 ? armLen * 0.33 : 0) * s, armThick * s, armLen * (t === 0 ? 0.37 : 0.5) * s);
+  ctx.fillStyle = P.skinShade;
+  ctx.fillRect(-armThick * s, armLen * 0.5 * s, armThick * s, armLen * 0.4 * s);
+  ctx.fillStyle = P.skin;
+  ctx.fillRect((-armThick + 0.1) * s, armLen * 0.88 * s, (armThick - 0.2) * s, 1.1 * s);
+  ctx.restore();
+
+  // Right arm
+  ctx.save();
+  ctx.translate((bX + bW + 0.3) * s, armY * s);
+  ctx.rotate(-armSwing * Math.PI / 180 * 3);
+  if (t === 0) {
+    ctx.fillStyle = '#2266CC';
+    ctx.fillRect(0, 0, armThick * s, armLen * 0.35 * s);
+    ctx.fillStyle = '#3388EE';
+    ctx.fillRect((armThick - 0.3) * s, 0, 0.3 * s, armLen * 0.35 * s);
+  }
+  ctx.fillStyle = P.skin;
+  ctx.fillRect(0, (t === 0 ? armLen * 0.33 : 0) * s, armThick * s, armLen * (t === 0 ? 0.37 : 0.5) * s);
+  ctx.fillStyle = P.skinShade;
+  ctx.fillRect(0, armLen * 0.5 * s, armThick * s, armLen * 0.4 * s);
+  ctx.fillStyle = P.skin;
+  ctx.fillRect(0.1 * s, armLen * 0.88 * s, (armThick - 0.2) * s, 1.1 * s);
+  ctx.restore();
+
+  // ══════════════════════════════════════
+  // ── PANTS ──
+  // ══════════════════════════════════════
+  const pTop = bTop + bH;
+  const pW = bW + (t >= 4 ? 0.5 : 0);
+  const pX = -pW / 2 + 1;
+  const pH = t >= 4 ? 2.5 : (3 + t * 0.3);
+
+  if (t === 0) {
+    // 1등급: 네이비 스포츠 팬츠
+    rect(pX, pTop, pW, pH, '#1A2A4A');
+    rect(pX + pW * 0.6, pTop, pW * 0.4, pH, '#142240');
+    // 사이드 흰줄
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(pX * s, pTop * s, 0.4 * s, pH * s);
+    ctx.fillRect((pX + pW - 0.4) * s, pTop * s, 0.4 * s, pH * s);
+  } else if (t >= 4) {
+    // 5등급: 짧은 반바지 (배에 밀려 올라감)
+    rect(pX, pTop, pW, pH, '#B8A888');
+    rect(pX + pW * 0.6, pTop, pW * 0.4, pH, '#A89878');
+  } else {
+    rect(pX, pTop, pW, pH, P.pants);
+    rect(pX + pW * 0.6, pTop, pW * 0.4, pH, P.pantsShade);
+  }
+  // Belt
+  ctx.fillStyle = t === 0 ? '#0D1B33' : P.pantsShade;
+  ctx.fillRect(pX * s, pTop * s, pW * s, 0.5 * s);
+  // Seam
+  ctx.fillStyle = t === 0 ? '#0D1B33' : P.pantsShade;
+  ctx.fillRect((pX + pW/2 - 0.1) * s, (pTop + 0.5) * s, 0.2 * s, (pH - 0.5) * s);
+
+  // ══════════════════════════════════════
+  // ── LEGS ──
+  // ══════════════════════════════════════
+  const legTop = pTop + pH - 0.3;
+  const legLen = t >= 4 ? 4.5 : (5.5 - t * 0.2);
+  const legThick = t >= 4 ? 2.3 : (t >= 3 ? 1.8 : (1.3 + t * 0.2));
+  const legSpread = t >= 4 ? 1.5 : (t * 0.25);
+
+  [[-1.2 - legSpread, legSwing], [1.2 + legSpread, -legSwing]].forEach(([offX, swing], idx) => {
+    ctx.save();
+    ctx.translate((offX + 1) * s, legTop * s);
+    ctx.rotate(swing * Math.PI / 180 * (t >= 4 ? 1.2 : 2));
+
+    // Upper leg
+    ctx.fillStyle = idx === 1 ? (t === 0 ? '#142240' : P.pantsShade) : (t === 0 ? '#1A2A4A' : P.pants);
+    ctx.fillRect(-legThick / 2 * s, 0, legThick * s, legLen * 0.3 * s);
+
+    // Lower leg (skin)
+    ctx.fillStyle = P.skin;
+    ctx.fillRect(-legThick / 2 * s, legLen * 0.28 * s, legThick * s, legLen * 0.55 * s);
+    ctx.fillStyle = P.skinShade;
+    ctx.fillRect((legThick * 0.1) * s, legLen * 0.3 * s, (legThick * 0.3) * s, legLen * 0.5 * s);
+
+    // Shoes
+    const shoeY = legLen * 0.8;
+    const shoeW = legThick + 0.8;
+    if (t === 0) {
+      // 1등급: 멋진 운동화 (파란+흰)
+      ctx.fillStyle = '#2255BB';
+      ctx.fillRect((-shoeW / 2) * s, shoeY * s, shoeW * s, 1.5 * s);
+      ctx.fillStyle = '#1A1A1A';
+      ctx.fillRect((-shoeW / 2) * s, (shoeY + 1.3) * s, shoeW * s, 0.4 * s);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect((-shoeW / 2 + 0.2) * s, (shoeY + 0.3) * s, (shoeW * 0.5) * s, 0.5 * s);
+      // 나이키풍 체크
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect((-shoeW / 2 + 0.3) * s, (shoeY + 0.8) * s, (shoeW * 0.35) * s, 0.25 * s);
+    } else {
+      ctx.fillStyle = P.shoes;
+      ctx.fillRect((-shoeW / 2) * s, shoeY * s, shoeW * s, 1.5 * s);
+      ctx.fillStyle = '#1A1A1A';
+      ctx.fillRect((-shoeW / 2) * s, (shoeY + 1.3) * s, shoeW * s, 0.4 * s);
+      ctx.fillStyle = P.shoesHi;
+      ctx.fillRect((-shoeW / 2 + 0.2) * s, (shoeY + 0.2) * s, (shoeW * 0.4) * s, 0.4 * s);
+    }
+
     ctx.restore();
   });
 
-  if (t >= 3) { const st = Date.now() / 300; ctx.fillStyle = 'rgba(135,206,250,0.6)'; ctx.fillRect((headX + 6.5) * s, (headY + 2 + Math.abs(Math.sin(st)) * 3) * s, 0.8 * s, 1.2 * s); if (t >= 4) ctx.fillRect((headX - 1.5) * s, (headY + 3 + Math.abs(Math.sin(st)) * 3) * s, 0.8 * s, 1.2 * s); }
-  if (t === 0) { const st = Date.now() / 400; ctx.fillStyle = `rgba(255,255,100,${0.3 + Math.sin(st) * 0.3})`; const sparkX = torsoX + torsoW + 2, sparkY = torsoTop - 1; ctx.fillRect(sparkX * s, (sparkY + 0.5) * s, 1.5 * s, 0.4 * s); ctx.fillRect((sparkX + 0.5) * s, sparkY * s, 0.4 * s, 1.5 * s); }
+  // ══════════════════════════════════════
+  // ── EFFECTS ──
+  // ══════════════════════════════════════
+
+  // ★ 5등급 (t>=4): 땀 폭포
+  if (t >= 3) {
+    const st = Date.now() / 250;
+    ctx.fillStyle = 'rgba(100,180,255,0.7)';
+
+    if (t >= 4) {
+      // 양쪽 얼굴에서 땀 5~6방울
+      for (let i = 0; i < 6; i++) {
+        const phase2 = st + i * 1.2;
+        const dY = (Math.abs(Math.sin(phase2)) * 5);
+        const side = i % 2 === 0 ? 1 : -1;
+        const offX = (5 + faceExtra + (i % 3) * 0.8) * side;
+        const offY = fY + 1 + i * 0.7;
+        ctx.globalAlpha = 0.5 + Math.sin(phase2) * 0.3;
+        ctx.beginPath();
+        ctx.moveTo(offX * s, (offY + dY) * s);
+        ctx.quadraticCurveTo((offX + 0.5 * side) * s, (offY + 1.2 + dY) * s, offX * s, (offY + 2 + dY) * s);
+        ctx.quadraticCurveTo((offX - 0.5 * side) * s, (offY + 1.2 + dY) * s, offX * s, (offY + dY) * s);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // 머리 위 증기
+      const steamAlpha = 0.15 + Math.sin(st * 0.5) * 0.1;
+      ctx.fillStyle = `rgba(200,220,255,${steamAlpha})`;
+      for (let i = 0; i < 3; i++) {
+        const sx2 = (-2 + i * 2.5 + Math.sin(st + i) * 0.5);
+        const sy2 = hY - 2 - Math.sin(st * 0.7 + i) * 1.5;
+        ctx.beginPath();
+        ctx.arc(sx2 * s, sy2 * s, (0.8 + i * 0.2) * s, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      // t=3: 땀 2방울
+      const dropY = Math.abs(Math.sin(st)) * 3;
+      ctx.beginPath();
+      ctx.moveTo(5.5 * s, (fY + 1 + dropY) * s);
+      ctx.quadraticCurveTo(6 * s, (fY + 2 + dropY) * s, 5.5 * s, (fY + 3 + dropY) * s);
+      ctx.quadraticCurveTo(5 * s, (fY + 2 + dropY) * s, 5.5 * s, (fY + 1 + dropY) * s);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-4 * s, (fY + 2 + dropY * 0.7) * s);
+      ctx.quadraticCurveTo(-3.5 * s, (fY + 3 + dropY * 0.7) * s, -4 * s, (fY + 4 + dropY * 0.7) * s);
+      ctx.quadraticCurveTo(-4.5 * s, (fY + 3 + dropY * 0.7) * s, -4 * s, (fY + 2 + dropY * 0.7) * s);
+      ctx.fill();
+    }
+  }
+
+  // ★ 1등급: 화려한 이펙트
+  if (t === 0) {
+    const st = Date.now() / 350;
+
+    // 아우라 글로우
+    ctx.save();
+    const auraAlpha = 0.08 + Math.sin(st) * 0.04;
+    ctx.fillStyle = `rgba(34,102,204,${auraAlpha})`;
+    ctx.beginPath();
+    ctx.ellipse(1 * s, (bTop + bH / 2) * s, (bW * 0.9) * s, (bH * 0.8) * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // 반짝이 3개 (시계방향 회전)
+    for (let i = 0; i < 3; i++) {
+      const angle = st * 1.2 + (i * Math.PI * 2 / 3);
+      const dist2 = (bW * 0.8 + 2);
+      const spX = (1 + Math.cos(angle) * dist2) * s;
+      const spY = (bTop + bH / 2 + Math.sin(angle) * (bH * 0.6)) * s;
+      const alpha = 0.5 + Math.sin(st * 2 + i) * 0.4;
+      const sz = (0.4 + Math.sin(st + i) * 0.15) * s;
+
+      ctx.fillStyle = `rgba(255,255,180,${alpha})`;
+      ctx.fillRect(spX - sz * 1.5, spY - sz * 0.3, sz * 3, sz * 0.6);
+      ctx.fillRect(spX - sz * 0.3, spY - sz * 1.5, sz * 0.6, sz * 3);
+      // 대각선
+      ctx.save();
+      ctx.translate(spX, spY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillRect(-sz, -sz * 0.2, sz * 2, sz * 0.4);
+      ctx.fillRect(-sz * 0.2, -sz, sz * 0.4, sz * 2);
+      ctx.restore();
+    }
+
+    // 엄지척 표시 (오른쪽 손 위)
+    const thumbAlpha = 0.6 + Math.sin(st * 1.5) * 0.3;
+    ctx.font = `${2.5 * s}px sans-serif`;
+    ctx.globalAlpha = thumbAlpha;
+    ctx.fillText('👍', (bX + bW + 3) * s, (bTop - 2) * s);
+    ctx.globalAlpha = 1;
+  }
 
   ctx.restore();
 }

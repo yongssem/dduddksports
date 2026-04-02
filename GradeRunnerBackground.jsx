@@ -37,8 +37,24 @@ const GRADES = [
   { label: '5등급', sub: '위험', color: '#ED93B1' },
 ];
 const PALETTE = {
-  1: '#FFD5A8', 2: '#3A2A1A', 3: '#5DCAA5',
-  4: '#2C3E6B', 5: '#E8E8E8', 6: '#1A1A2E', 7: '#CC4444',
+  skin: '#F5C9A0',
+  skinShade: '#E0A878',
+  skinHi: '#FDDDC0',
+  hair: '#8B6B4A',
+  hairDark: '#6B4F35',
+  hairLight: '#A88B6A',
+  eye: '#2C2C3A',
+  eyeWhite: '#FFFFFF',
+  eyeBrow: '#5C4030',
+  mouth: '#CC5555',
+  shirt: '#F0F0F0',
+  shirtShade: '#D8D8D8',
+  shirtHi: '#FFFFFF',
+  pants: '#E8DCC8',
+  pantsShade: '#D4C8B0',
+  shoes: '#2A2A2A',
+  shoesHi: '#444444',
+  outline: '#3A2820',
 };
 
 function getGradeAtY(y, H) {
@@ -61,115 +77,228 @@ function drawPixelChar(ctx, x, y, scale, bodyType, frameIndex) {
 
   const s = PX * scale;
   const t = bodyType;
-  const belly = t * 1.5;
-  const legSpread = t * 0.3;
+  const belly = t * 1.2;
 
   const phase = (frameIndex / 6) * Math.PI * 2;
-  const legSwing = Math.sin(phase) * (12 - t);
-  const armSwing = Math.sin(phase + Math.PI) * (10 - t * 0.5);
+  const legSwing = Math.sin(phase) * (14 - t);
+  const armSwing = Math.sin(phase + Math.PI) * (12 - t * 0.5);
   const bounce = Math.abs(Math.sin(phase)) * (3 - t * 0.3);
 
   ctx.translate(0, -bounce * s / PX);
 
-  const skin = PALETTE[1], hair = PALETTE[2], shirt = PALETTE[3];
-  const pants = PALETTE[4], shoes = PALETTE[5], eye = PALETTE[6], band = PALETTE[7];
+  const P = PALETTE;
 
-  const rect = (px, py, pw, ph, color) => {
+  const px = (bx, by, color) => {
     ctx.fillStyle = color;
-    ctx.fillRect(px * s, py * s, pw * s, ph * s);
+    ctx.fillRect(bx * s, by * s, s, s);
+  };
+  const rect = (bx, by, w, h, color) => {
+    ctx.fillStyle = color;
+    ctx.fillRect(bx * s, by * s, w * s, h * s);
   };
 
-  // Head
-  const headX = -3, headY = -14 - (t > 2 ? 0.5 : 0);
-  rect(headX, headY, 6, 2, hair);
-  rect(headX - 0.5, headY + 0.5, 7, 2, hair);
-  rect(headX, headY + 2, 6, 1, band);
-  rect(headX, headY + 3, 6, 3, skin);
-  rect(headX + 1, headY + 3.5, 1, 1, eye);
-  rect(headX + 4, headY + 3.5, 1, 1, eye);
-  rect(headX + 1, headY + 5, 4, 0.5, skin);
+  // ── Hair (top, fluffy short style) ──
+  const hY = -18 - (t > 2 ? 0.5 : 0);
+  px(-2, hY, P.hairLight); px(-1, hY, P.hair); px(0, hY, P.hairLight); px(1, hY, P.hair);
+  rect(-3, hY+1, 7, 1, P.hair);
+  px(4, hY+1, P.hairLight);
+  px(-4, hY+2, P.hairDark);
+  rect(-3, hY+2, 8, 1, P.hair);
+  px(5, hY+2, P.hairLight);
+  px(-4, hY+3, P.hairDark);
+  rect(-3, hY+3, 8, 1, P.hair);
+  px(5, hY+3, P.hairDark);
+  px(-4, hY+4, P.hairDark); px(-3, hY+4, P.hair);
+  px(4, hY+4, P.hair); px(5, hY+4, P.hairDark);
 
-  // Neck
-  rect(-1, headY + 6, 2, 1, skin);
+  // ── Face ──
+  const fY = hY + 4;
+  rect(-2, fY, 6, 1, P.skinHi);
+  rect(-3, fY+1, 8, 1, P.skin);
+  rect(-3, fY+2, 8, 1, P.skin);
+  rect(-3, fY+3, 8, 1, P.skin);
+  rect(-2, fY+4, 6, 1, P.skinShade);
+  rect(-1, fY+5, 4, 1, P.skinShade);
 
-  // Torso
-  const torsoTop = headY + 7;
-  const torsoW = 4 + belly;
-  const torsoH = 5 + t * 0.8;
-  const torsoX = -torsoW / 2;
-  rect(torsoX, torsoTop, torsoW, torsoH, shirt);
+  px(-4, fY+2, P.skin); px(-4, fY+3, P.skinShade);
+  px(5, fY+2, P.skin); px(5, fY+3, P.skinShade);
 
-  if (t >= 3) {
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    ctx.fillRect((torsoX + 1) * s, (torsoTop + 1) * s, (torsoW - 2) * s, (torsoH - 2) * s);
-  }
+  rect(-2, fY+1, 2, 0.6, P.eyeBrow);
+  rect(2, fY+1, 2, 0.6, P.eyeBrow);
+
+  px(-2, fY+2, P.eyeWhite); px(-1, fY+2, P.eye);
+  px(2, fY+2, P.eyeWhite); px(3, fY+2, P.eye);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(-1.6 * s, (fY+1.7) * s, 0.4 * s, 0.4 * s);
+  ctx.fillRect(2.4 * s, (fY+1.7) * s, 0.4 * s, 0.4 * s);
+
+  ctx.fillStyle = P.skinShade;
+  ctx.fillRect(0.3 * s, (fY+3) * s, 0.6 * s, 0.5 * s);
+
+  ctx.fillStyle = P.mouth;
+  ctx.fillRect(-0.5 * s, (fY+3.8) * s, 2.5 * s, 0.5 * s);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0 * s, (fY+3.8) * s, 1.5 * s, 0.3 * s);
+
+  ctx.fillStyle = 'rgba(255,130,130,0.3)';
+  ctx.fillRect(-3 * s, (fY+3) * s, 1.5 * s, 0.8 * s);
+  ctx.fillRect(3 * s, (fY+3) * s, 1.5 * s, 0.8 * s);
+
+  ctx.fillStyle = P.outline + '40';
+  for (let i = 1; i <= 3; i++) ctx.fillRect(-3.2 * s, (fY+i) * s, 0.2 * s, s);
+  for (let i = 1; i <= 3; i++) ctx.fillRect(5 * s, (fY+i) * s, 0.2 * s, s);
+  ctx.fillRect(-1 * s, (fY+5) * s, 4 * s, 0.2 * s);
+
+  // ── Neck ──
+  rect(0, fY+5.5, 2, 1.5, P.skin);
+  px(0, fY+6, P.skinShade);
+
+  // ── Body / Shirt ──
+  const bTop = fY + 7;
+  const bW = 5 + belly;
+  const bH = 5.5 + t * 0.8;
+  const bX = -bW / 2 + 1;
+
+  rect(bX, bTop, bW, bH, P.shirt);
+  rect(bX + bW * 0.65, bTop, bW * 0.35, bH, P.shirtShade);
+  rect(bX + 0.5, bTop + 0.5, 1.5, bH - 1, P.shirtHi);
+  ctx.fillStyle = P.shirtShade;
+  ctx.fillRect((bX + 1) * s, bTop * s, (bW - 2) * s, 0.3 * s);
+  rect(bX, bTop, 1.5, 1, P.shirt);
+  rect(bX + bW - 1.5, bTop, 1.5, 1, P.shirt);
+  ctx.strokeStyle = P.outline + '30';
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(bX * s, bTop * s, bW * s, bH * s);
+
   if (t === 0) {
-    ctx.fillStyle = 'rgba(0,0,0,0.08)';
-    ctx.fillRect(-0.3 * s, torsoTop * s, 0.6 * s, torsoH * s);
+    ctx.fillStyle = 'rgba(0,0,0,0.06)';
+    ctx.fillRect((bX + bW/2 - 0.15) * s, (bTop + 1) * s, 0.3 * s, (bH - 2) * s);
   }
-  if (t <= 1) {
-    rect(torsoX - 0.8, torsoTop, 1, 2, shirt);
-    rect(torsoX + torsoW - 0.2, torsoTop, 1, 2, shirt);
+  if (t >= 3) {
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.beginPath();
+    ctx.ellipse((bX + bW/2) * s, (bTop + bH * 0.6) * s, (bW * 0.35) * s, (bH * 0.35) * s, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
 
-  // Arms
-  const armY = torsoTop + 1;
-  const armLen = 4 + (t === 0 ? 0.5 : 0);
-  const armThick = t >= 3 ? 1.5 : 1;
+  // ── Arms ──
+  const armY = bTop + 0.8;
+  const armLen = 5 + (t === 0 ? 0.5 : 0);
+  const armThick = 1.2 + t * 0.3;
 
   ctx.save();
-  ctx.translate((torsoX - 0.5) * s, armY * s);
+  ctx.translate((bX - 0.3) * s, armY * s);
   ctx.rotate(armSwing * Math.PI / 180 * 3);
-  ctx.fillStyle = skin;
-  ctx.fillRect(-armThick * s, 0, armThick * s, armLen * s);
+  ctx.fillStyle = P.skin;
+  ctx.fillRect(-armThick * s, 0, armThick * s, armLen * 0.5 * s);
+  ctx.fillStyle = P.skinShade;
+  ctx.fillRect(-armThick * s, armLen * 0.5 * s, armThick * s, armLen * 0.5 * s);
+  ctx.fillStyle = P.skin;
+  ctx.fillRect((-armThick + 0.1) * s, armLen * 0.9 * s, (armThick - 0.2) * s, 1 * s);
+  ctx.strokeStyle = P.outline + '20';
+  ctx.lineWidth = 0.3;
+  ctx.strokeRect(-armThick * s, 0, armThick * s, armLen * s);
   ctx.restore();
 
   ctx.save();
-  ctx.translate((torsoX + torsoW + 0.5) * s, armY * s);
+  ctx.translate((bX + bW + 0.3) * s, armY * s);
   ctx.rotate(-armSwing * Math.PI / 180 * 3);
-  ctx.fillStyle = skin;
-  ctx.fillRect(0, 0, armThick * s, armLen * s);
+  ctx.fillStyle = P.skin;
+  ctx.fillRect(0, 0, armThick * s, armLen * 0.5 * s);
+  ctx.fillStyle = P.skinShade;
+  ctx.fillRect(0, armLen * 0.5 * s, armThick * s, armLen * 0.5 * s);
+  ctx.fillStyle = P.skin;
+  ctx.fillRect(0.1 * s, armLen * 0.9 * s, (armThick - 0.2) * s, 1 * s);
+  ctx.strokeStyle = P.outline + '20';
+  ctx.lineWidth = 0.3;
+  ctx.strokeRect(0, 0, armThick * s, armLen * s);
   ctx.restore();
 
-  // Pants + Legs
-  const pantsTop = torsoTop + torsoH;
-  const pantsW = torsoW - (t >= 3 ? 0 : 0.5);
-  const pantsX = -pantsW / 2;
-  const pantsH = 3 + t * 0.3;
-  rect(pantsX, pantsTop, pantsW, pantsH * 0.5, pants);
+  // ── Pants ──
+  const pTop = bTop + bH;
+  const pW = bW - (t >= 3 ? 0 : 0.3);
+  const pX = -pW / 2 + 1;
+  const pH = 3 + t * 0.3;
+  rect(pX, pTop, pW, pH, P.pants);
+  rect(pX + pW * 0.6, pTop, pW * 0.4, pH, P.pantsShade);
+  ctx.fillStyle = P.pantsShade;
+  ctx.fillRect(pX * s, pTop * s, pW * s, 0.5 * s);
+  ctx.fillStyle = P.pantsShade;
+  ctx.fillRect((pX + pW/2 - 0.1) * s, (pTop + 0.5) * s, 0.2 * s, (pH - 0.5) * s);
 
-  const legTop = pantsTop + pantsH * 0.4;
-  const legLen = 5 - t * 0.2;
-  const legThick = 1 + t * 0.4;
+  // ── Legs ──
+  const legTop = pTop + pH - 0.3;
+  const legLen = 5.5 - t * 0.2;
+  const legThick = 1.3 + t * 0.35;
+  const legSpread = t * 0.25;
 
-  [[-1 - legSpread, legSwing], [1 + legSpread, -legSwing]].forEach(([offX, swing]) => {
+  [[-1.2 - legSpread, legSwing], [1.2 + legSpread, -legSwing]].forEach(([offX, swing], idx) => {
     ctx.save();
-    ctx.translate(offX * s, legTop * s);
+    ctx.translate((offX + 1) * s, legTop * s);
     ctx.rotate(swing * Math.PI / 180 * 2);
-    ctx.fillStyle = pants;
-    ctx.fillRect(-legThick / 2 * s, 0, legThick * s, legLen * 0.6 * s);
-    ctx.fillStyle = skin;
-    ctx.fillRect(-legThick / 2 * s, legLen * 0.5 * s, legThick * s, legLen * 0.4 * s);
-    ctx.fillStyle = shoes;
-    ctx.fillRect((-legThick / 2 - 0.3) * s, legLen * 0.9 * s, (legThick + 0.8) * s, 1.2 * s);
+
+    ctx.fillStyle = idx === 1 ? P.pantsShade : P.pants;
+    ctx.fillRect(-legThick / 2 * s, 0, legThick * s, legLen * 0.3 * s);
+
+    ctx.fillStyle = P.skin;
+    ctx.fillRect(-legThick / 2 * s, legLen * 0.28 * s, legThick * s, legLen * 0.55 * s);
+    ctx.fillStyle = P.skinShade;
+    ctx.fillRect((legThick * 0.1) * s, legLen * 0.3 * s, (legThick * 0.3) * s, legLen * 0.5 * s);
+    ctx.fillStyle = P.skinHi;
+    ctx.fillRect((-legThick * 0.3) * s, legLen * 0.4 * s, (legThick * 0.3) * s, 0.6 * s);
+
+    const shoeY = legLen * 0.8;
+    const shoeW = legThick + 0.8;
+    ctx.fillStyle = P.shoes;
+    ctx.fillRect((-shoeW / 2) * s, shoeY * s, shoeW * s, 1.5 * s);
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillRect((-shoeW / 2) * s, (shoeY + 1.3) * s, shoeW * s, 0.4 * s);
+    ctx.fillStyle = P.shoesHi;
+    ctx.fillRect((-shoeW / 2 + 0.2) * s, (shoeY + 0.2) * s, (shoeW * 0.4) * s, 0.4 * s);
+    ctx.fillStyle = '#888888';
+    ctx.fillRect((-shoeW / 2 + 0.4) * s, (shoeY + 0.7) * s, 0.3 * s, 0.3 * s);
+    ctx.fillRect(0.1 * s, (shoeY + 0.7) * s, 0.3 * s, 0.3 * s);
+
     ctx.restore();
   });
 
-  // Sweat (chubby)
+  // ── Effects ──
   if (t >= 3) {
     const st = Date.now() / 300;
-    ctx.fillStyle = 'rgba(135,206,250,0.6)';
-    ctx.fillRect((headX + 6.5) * s, (headY + 2 + Math.abs(Math.sin(st)) * 3) * s, 0.8 * s, 1.2 * s);
-    if (t >= 4) ctx.fillRect((headX - 1.5) * s, (headY + 3 + Math.abs(Math.sin(st)) * 3) * s, 0.8 * s, 1.2 * s);
+    const dropY = Math.abs(Math.sin(st)) * 3;
+    ctx.fillStyle = 'rgba(100,180,255,0.7)';
+    ctx.beginPath();
+    ctx.moveTo(5.5 * s, (fY + 1 + dropY) * s);
+    ctx.quadraticCurveTo(6 * s, (fY + 2 + dropY) * s, 5.5 * s, (fY + 3 + dropY) * s);
+    ctx.quadraticCurveTo(5 * s, (fY + 2 + dropY) * s, 5.5 * s, (fY + 1 + dropY) * s);
+    ctx.fill();
+    if (t >= 4) {
+      ctx.beginPath();
+      ctx.moveTo(-4 * s, (fY + 2 + dropY * 0.7) * s);
+      ctx.quadraticCurveTo(-3.5 * s, (fY + 3 + dropY * 0.7) * s, -4 * s, (fY + 4 + dropY * 0.7) * s);
+      ctx.quadraticCurveTo(-4.5 * s, (fY + 3 + dropY * 0.7) * s, -4 * s, (fY + 2 + dropY * 0.7) * s);
+      ctx.fill();
+    }
   }
 
-  // Sparkle (fit)
   if (t === 0) {
     const st = Date.now() / 400;
-    ctx.fillStyle = `rgba(255,255,100,${0.3 + Math.sin(st) * 0.3})`;
-    const sparkX = torsoX + torsoW + 2, sparkY = torsoTop - 1;
-    ctx.fillRect(sparkX * s, (sparkY + 0.5) * s, 1.5 * s, 0.4 * s);
-    ctx.fillRect((sparkX + 0.5) * s, sparkY * s, 0.4 * s, 1.5 * s);
+    const alpha = 0.4 + Math.sin(st) * 0.35;
+    ctx.fillStyle = `rgba(255,255,120,${alpha})`;
+    const spX = (bX + bW + 2.5) * s;
+    const spY = (bTop - 1) * s;
+    ctx.fillRect(spX, spY + 0.5 * s, 1.8 * s, 0.4 * s);
+    ctx.fillRect(spX + 0.7 * s, spY - 0.2 * s, 0.4 * s, 1.8 * s);
+    ctx.fillRect(spX + 0.2 * s, spY + 0.1 * s, 0.3 * s, 0.3 * s);
+    ctx.fillRect(spX + 1.3 * s, spY + 0.1 * s, 0.3 * s, 0.3 * s);
+    ctx.fillRect(spX + 0.2 * s, spY + 1 * s, 0.3 * s, 0.3 * s);
+    ctx.fillRect(spX + 1.3 * s, spY + 1 * s, 0.3 * s, 0.3 * s);
+    const sp2X = (bX - 2) * s;
+    const sp2Y = (bTop + 1) * s;
+    const alpha2 = 0.3 + Math.sin(st + 1.5) * 0.25;
+    ctx.fillStyle = `rgba(255,255,180,${alpha2})`;
+    ctx.fillRect(sp2X, sp2Y + 0.3 * s, 1.2 * s, 0.3 * s);
+    ctx.fillRect(sp2X + 0.45 * s, sp2Y, 0.3 * s, 1.2 * s);
   }
 
   ctx.restore();

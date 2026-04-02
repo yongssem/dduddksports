@@ -25,8 +25,12 @@ export default function ClassSetup({ classData, onRefresh }) {
     { id: 'invite', label: '초대 코드', icon: '🔗' },
   ]
 
+  const [copied, setCopied] = useState(false)
+
   function copyCode() {
     navigator.clipboard?.writeText(classData.inviteCode)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   const visibilityOptions = [
@@ -147,9 +151,9 @@ export default function ClassSetup({ classData, onRefresh }) {
           <div className="mt-4">
             <button
               onClick={copyCode}
-              className="px-6 py-3 bg-mint text-white rounded-xl font-medium touch-target"
+              className={`px-6 py-3 rounded-xl font-medium touch-target transition-colors ${copied ? 'bg-green-500 text-white' : 'bg-mint text-white'}`}
             >
-              📋 코드 복사
+              {copied ? '✅ 복사 완료!' : '📋 코드 복사'}
             </button>
           </div>
           <p className="text-navy/40 text-xs mt-4">
