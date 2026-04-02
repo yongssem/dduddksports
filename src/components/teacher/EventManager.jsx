@@ -9,24 +9,25 @@ export default function EventManager({ classId }) {
   const [newEvent, setNewEvent] = useState({ name: '', unit: '회', direction: 'high', targetValue: '' })
 
   useEffect(() => {
-    setEvents(getEvents(classId))
+    refresh()
   }, [classId])
 
-  function refresh() {
-    setEvents(getEvents(classId))
+  async function refresh() {
+    setEvents(await getEvents(classId))
   }
 
-  function toggleEvent(eventId) {
-    const all = getEvents(classId).map(e =>
+  async function toggleEvent(eventId) {
+    const all = await getEvents(classId)
+    const updated = all.map(e =>
       e.id === eventId ? { ...e, isActive: !e.isActive } : e
     )
-    saveEvents(classId, all)
-    refresh()
+    await saveEvents(classId, updated)
+    await refresh()
   }
 
-  function addCustomEvent() {
+  async function addCustomEvent() {
     if (!newEvent.name.trim() || !newEvent.targetValue) return
-    const all = getEvents(classId)
+    const all = await getEvents(classId)
     all.push({
       id: generateId(),
       name: newEvent.name.trim(),
@@ -37,16 +38,16 @@ export default function EventManager({ classId }) {
       isActive: true,
       order: all.length,
     })
-    saveEvents(classId, all)
+    await saveEvents(classId, all)
     setNewEvent({ name: '', unit: '회', direction: 'high', targetValue: '' })
     setShowAdd(false)
-    refresh()
+    await refresh()
   }
 
-  function removeEvent(eventId) {
-    const all = getEvents(classId).filter(e => e.id !== eventId)
-    saveEvents(classId, all)
-    refresh()
+  async function removeEvent(eventId) {
+    const all = (await getEvents(classId)).filter(e => e.id !== eventId)
+    await saveEvents(classId, all)
+    await refresh()
   }
 
   const units = ['회', '초', 'cm', 'kg', 'm', '점']

@@ -1,74 +1,101 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { generateId } from '../utils/constants'
+import { auth } from '../firebase'
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+} from 'firebase/auth'
+import { createTeacher, getTeacherByName, getTeacherById } from '../services/firestore'
 
 const AuthContext = createContext(null)
-
-const STORAGE_KEYS = {
-  teachers: 'fithero_teachers',
-  currentUser: 'fithero_currentUser',
-}
-
-function getTeachers() {
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.teachers) || '[]')
-}
-
-function saveTeachers(teachers) {
-  localStorage.setItem(STORAGE_KEYS.teachers, JSON.stringify(teachers))
-}
-
-async function hashPassword(password) {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password)
-  const hash = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
-}
+const googleProvider = new GoogleAuthProvider()
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.currentUser)
-    if (saved) {
-      setUser(JSON.parse(saved))
-    }
-    setLoading(false)
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        const saved = localStorage.getItem('fithero_currentUser')
+        if (saved) {
+          setUser(JSON.parse(saved))
+        }
+      } else {
+        const saved = localStorage.getItem('fithero_currentUser')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (parsed.role === 'student') {
+            setUser(parsed)
+          } else {
+            setUser(null)
+            localStorage.removeItem('fithero_currentUser')
+          }
+        }
+      }
+      setLoading(false)
+    })
+    return () => unsubscribe()
   }, [])
 
   function persistUser(userData) {
     setUser(userData)
-    localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(userData))
+    localStorage.setItem('fithero_currentUser', JSON.stringify(userData))
   }
 
-  async function teacherSignup(name, password) {
-    const teachers = getTeachers()
-    if (teachers.some(t => t.name === name)) {
-      throw new Error('이미 사용 중인 이름입니다.')
-    }
-    const passwordHash = await hashPassword(password)
+  // ── 이메일 회원가입 ──
+  async function teacherSignup(email, password, displayName) {
+    const cred = await createUserWithEmailAndPassword(auth, email, password)
+
     const teacher = {
-      id: generateId(),
-      name,
-      passwordHash,
-      createdAt: new Date().toISOString(),
+      id: cred.user.uid,
+      name: displayName,
+      email,
+      firebaseUid: cred.user.uid,
     }
-    teachers.push(teacher)
-    saveTeachers(teachers)
+    await createTeacher(teacher)
+
     const userData = { id: teacher.id, name: teacher.name, role: 'teacher' }
     persistUser(userData)
     return userData
   }
 
-  async function teacherLogin(name, password) {
-    const teachers = getTeachers()
-    const teacher = teachers.find(t => t.name === name)
+  // ── 이메일 로그인 ──
+  async function teacherLogin(email, password) {
+    const cred = await signInWithEmailAndPassword(auth, email, password)
+
+    const teacher = await getTeacherById(cred.user.uid)
     if (!teacher) {
-      throw new Error('등록되지 않은 이름입니다.')
+      throw new Error('등록된 선생님 정보를 찾을 수 없습니다.')
     }
-    const passwordHash = await hashPassword(password)
-    if (teacher.passwordHash !== passwordHash) {
-      throw new Error('비밀번호가 일치하지 않습니다.')
+
+    const userData = { id: teacher.id, name: teacher.name, role: 'teacher' }
+    persistUser(userData)
+    return userData
+  }
+
+  // ── Google 로그인/가입 (자동 판별) ──
+  async function teacherGoogleLogin() {
+    const cred = await signInWithPopup(auth, googleProvider)
+    const { uid, displayName, email } = cred.user
+
+    // 이미 등록된 선생님인지 확인
+    let teacher = await getTeacherById(uid)
+
+    if (!teacher) {
+      // 최초 Google 로그인 → 자동 가입
+      teacher = {
+        id: uid,
+        name: displayName || email.split('@')[0],
+        email,
+        firebaseUid: uid,
+      }
+      await createTeacher(teacher)
     }
+
     const userData = { id: teacher.id, name: teacher.name, role: 'teacher' }
     persistUser(userData)
     return userData
@@ -87,13 +114,18 @@ export function AuthProvider({ children }) {
     return userData
   }
 
-  function logout() {
+  async function logout() {
+    try {
+      await signOut(auth)
+    } catch (e) {
+      // 학생은 Firebase Auth 사용 안하므로 에러 무시
+    }
     setUser(null)
-    localStorage.removeItem(STORAGE_KEYS.currentUser)
+    localStorage.removeItem('fithero_currentUser')
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, teacherSignup, teacherLogin, studentJoin, logout }}>
+    <AuthContext.Provider value={{ user, loading, teacherSignup, teacherLogin, teacherGoogleLogin, studentJoin, logout }}>
       {children}
     </AuthContext.Provider>
   )

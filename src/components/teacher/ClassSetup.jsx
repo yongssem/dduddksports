@@ -12,10 +12,10 @@ export default function ClassSetup({ classData, onRefresh }) {
     setSettings(getClassSettings(classData.id))
   }, [classData.id])
 
-  function handleSettingChange(key, value) {
+  async function handleSettingChange(key, value) {
     const updated = { ...settings, [key]: value }
     setSettings(updated)
-    updateClassSettings(classData.id, updated)
+    await updateClassSettings(classData.id, updated)
   }
 
   const tabs = [

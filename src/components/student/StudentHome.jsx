@@ -18,7 +18,11 @@ export default function StudentHome() {
       navigate('/')
       return
     }
-    setEvents(getEvents(user.classId).filter(e => e.isActive))
+    async function load() {
+      const allEvents = await getEvents(user.classId)
+      setEvents(allEvents.filter(e => e.isActive))
+    }
+    load()
   }, [user, navigate])
 
   if (!user) return null

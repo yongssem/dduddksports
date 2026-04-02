@@ -16,7 +16,10 @@ export default function BadgeCollection() {
       navigate('/')
       return
     }
-    setBadges(getBadgeStatus(user.classId, user.id))
+    async function load() {
+      setBadges(await getBadgeStatus(user.classId, user.id))
+    }
+    load()
   }, [user, navigate])
 
   const earnedCount = badges.filter(b => b.earned).length

@@ -28,9 +28,9 @@ export default function Dashboard() {
     }
   }, [classes, selectedClass])
 
-  function handleCreateClass() {
+  async function handleCreateClass() {
     if (!newClass.schoolName.trim() || !newClass.grade || !newClass.classNumber) return
-    const created = createClass(newClass.schoolName.trim(), newClass.grade, newClass.classNumber)
+    const created = await createClass(newClass.schoolName.trim(), newClass.grade, newClass.classNumber)
     setSelectedClass(created)
     setNewClass({ schoolName: '', grade: '', classNumber: '' })
     setShowCreate(false)

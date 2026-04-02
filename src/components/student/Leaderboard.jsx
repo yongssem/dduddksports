@@ -23,8 +23,12 @@ export default function Leaderboard() {
       navigate('/')
       return
     }
-    setEvents(getEvents(user.classId).filter(e => e.isActive))
-    setStudents(getStudents(user.classId))
+    async function load() {
+      const allEvents = await getEvents(user.classId)
+      setEvents(allEvents.filter(e => e.isActive))
+      setStudents(await getStudents(user.classId))
+    }
+    load()
   }, [user, navigate])
 
   // Block if private

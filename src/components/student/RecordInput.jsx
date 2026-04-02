@@ -22,6 +22,7 @@ export default function RecordInput() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [savedRecord, setSavedRecord] = useState(null)
   const [newBadges, setNewBadges] = useState([])
+  const [saving, setSaving] = useState(false)
   const { records, addRecord, getStudentEventRecords } = useRecords(user?.classId)
   const { getClassSettings } = useClass()
   const classSettings = user?.classId ? getClassSettings(user.classId) : {}
@@ -32,7 +33,11 @@ export default function RecordInput() {
       navigate('/')
       return
     }
-    setEvents(getEvents(user.classId).filter(e => e.isActive))
+    async function load() {
+      const allEvents = await getEvents(user.classId)
+      setEvents(allEvents.filter(e => e.isActive))
+    }
+    load()
   }, [user, navigate])
 
   const selectedEvent = events.find(e => e.id === selectedEventId)
@@ -45,19 +50,23 @@ export default function RecordInput() {
     setShowConfirm(true)
   }
 
-  function confirmRecord() {
+  async function confirmRecord() {
     setShowConfirm(false)
-    const record = addRecord(user.id, user.name, selectedEvent.id, selectedEvent.name, value, memo)
-    setSavedRecord({ value: Number(value), unit: selectedEvent.unit, eventName: selectedEvent.name })
+    setSaving(true)
+    try {
+      await addRecord(user.id, user.name, selectedEvent.id, selectedEvent.name, value, memo)
+      setSavedRecord({ value: Number(value), unit: selectedEvent.unit, eventName: selectedEvent.name })
 
-    // Run badge checker with fresh records
-    const freshRecords = JSON.parse(localStorage.getItem(`fithero_records_${user.classId}`) || '[]')
-    const badges = checkBadges(user.classId, user.id, freshRecords)
-    setNewBadges(badges)
+      // Run badge checker with fresh records
+      const badges = await checkBadges(user.classId, user.id, records)
+      setNewBadges(badges)
 
-    setValue('')
-    setMemo('')
-    setShowSuccess(true)
+      setValue('')
+      setMemo('')
+      setShowSuccess(true)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const isDecimal = selectedEvent && ['초', 'cm', 'kg', 'm'].includes(selectedEvent.unit)
@@ -171,10 +180,10 @@ export default function RecordInput() {
 
             <button
               onClick={handleSubmit}
-              disabled={!value}
+              disabled={!value || saving}
               className="w-full py-4 bg-gradient-to-r from-orange to-orange-light text-white rounded-2xl font-black text-lg shadow-lg shadow-orange/25 disabled:opacity-40 touch-target mt-4 font-display transition-shadow hover:shadow-xl hover:shadow-orange/30"
             >
-              기록하기 💪
+              {saving ? '저장 중...' : '기록하기 💪'}
             </button>
           </div>
         )}

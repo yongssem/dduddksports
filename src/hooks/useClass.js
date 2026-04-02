@@ -1,51 +1,38 @@
 import { useState, useEffect, useCallback } from 'react'
 import { generateId, generateInviteCode, DEFAULT_PAPS_EVENTS, DEFAULT_BADGES } from '../utils/constants'
+import * as fs from '../services/firestore'
 
-const STORAGE_KEYS = {
-  classes: 'fithero_classes',
-  students: (classId) => `fithero_students_${classId}`,
-  events: (classId) => `fithero_events_${classId}`,
-  badgeRules: (classId) => `fithero_badgeRules_${classId}`,
+// Async helper exports (used by components directly)
+export async function getStudents(classId) {
+  return fs.getStudents(classId)
 }
 
-function getClasses() {
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.classes) || '[]')
+export async function saveStudents(classId, students) {
+  return fs.addStudents(classId, students)
 }
 
-function saveClasses(classes) {
-  localStorage.setItem(STORAGE_KEYS.classes, JSON.stringify(classes))
+export async function getEvents(classId) {
+  return fs.getEvents(classId)
 }
 
-export function getStudents(classId) {
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.students(classId)) || '[]')
-}
-
-export function saveStudents(classId, students) {
-  localStorage.setItem(STORAGE_KEYS.students(classId), JSON.stringify(students))
-}
-
-export function getEvents(classId) {
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.events(classId)) || '[]')
-}
-
-export function saveEvents(classId, events) {
-  localStorage.setItem(STORAGE_KEYS.events(classId), JSON.stringify(events))
+export async function saveEvents(classId, events) {
+  return fs.setEvents(classId, events)
 }
 
 export function useClass(teacherId) {
   const [classes, setClasses] = useState([])
 
-  const loadClasses = useCallback(() => {
-    const all = getClasses()
-    setClasses(teacherId ? all.filter(c => c.teacherId === teacherId) : all)
+  const loadClasses = useCallback(async () => {
+    if (!teacherId) return
+    const all = await fs.getClassesByTeacher(teacherId)
+    setClasses(all)
   }, [teacherId])
 
   useEffect(() => {
     loadClasses()
   }, [loadClasses])
 
-  function createClass(schoolName, grade, classNumber) {
-    const allClasses = getClasses()
+  async function createClass(schoolName, grade, classNumber) {
     const inviteCode = generateInviteCode()
     const classId = generateId()
 
@@ -56,15 +43,13 @@ export function useClass(teacherId) {
       grade: Number(grade),
       classNumber: Number(classNumber),
       inviteCode,
-      createdAt: new Date().toISOString(),
       settings: {
-        studentInputEnabled: true,   // 학생 자기입력 허용 여부
-        recordVisibility: 'private', // 'private' (본인+담임) | 'leaderboard' (순위 공개) | 'anonymous' (익명 순위)
+        studentInputEnabled: true,
+        recordVisibility: 'private',
       },
     }
 
-    allClasses.push(newClass)
-    saveClasses(allClasses)
+    await fs.createClassDoc(newClass)
 
     // Seed default PAPS events
     const events = DEFAULT_PAPS_EVENTS.map((e, i) => ({
@@ -73,7 +58,7 @@ export function useClass(teacherId) {
       isActive: true,
       order: i,
     }))
-    saveEvents(classId, events)
+    await fs.setEvents(classId, events)
 
     // Seed default badge rules
     const badges = DEFAULT_BADGES.map(b => ({
@@ -81,14 +66,14 @@ export function useClass(teacherId) {
       ...b,
       isActive: true,
     }))
-    localStorage.setItem(STORAGE_KEYS.badgeRules(classId), JSON.stringify(badges))
+    await fs.setBadgeRules(classId, badges)
 
-    loadClasses()
+    await loadClasses()
     return newClass
   }
 
-  function addClass(students, classId) {
-    const existing = getStudents(classId)
+  async function addClass(students, classId) {
+    const existing = await fs.getStudents(classId)
     const newStudents = students.map((s, i) => ({
       id: generateId(),
       number: existing.length + i + 1,
@@ -96,67 +81,54 @@ export function useClass(teacherId) {
       pin: null,
       createdAt: new Date().toISOString(),
     }))
-    saveStudents(classId, [...existing, ...newStudents])
+    await fs.addStudents(classId, newStudents)
   }
 
-  function removeStudent(classId, studentId) {
-    const students = getStudents(classId).filter(s => s.id !== studentId)
-    saveStudents(classId, students)
+  async function removeStudent(classId, studentId) {
+    await fs.removeStudent(classId, studentId)
   }
 
-  function findClassByInviteCode(code) {
-    const allClasses = getClasses()
-    return allClasses.find(c => c.inviteCode === code.toUpperCase()) || null
+  async function findClassByInviteCode(code) {
+    return fs.getClassByInviteCode(code)
   }
 
-  function regenerateInviteCode(classId) {
-    const allClasses = getClasses()
-    const cls = allClasses.find(c => c.id === classId)
-    if (cls) {
-      cls.inviteCode = generateInviteCode()
-      saveClasses(allClasses)
-      loadClasses()
-      return cls.inviteCode
-    }
-    return null
+  async function regenerateInviteCode(classId) {
+    const newCode = generateInviteCode()
+    await fs.updateClassDoc(classId, { inviteCode: newCode })
+    await loadClasses()
+    return newCode
   }
 
-  function updateEvent(classId, eventId, updates) {
-    const events = getEvents(classId).map(e => e.id === eventId ? { ...e, ...updates } : e)
-    saveEvents(classId, events)
+  async function updateEvent(classId, eventId, updates) {
+    await fs.updateEvent(classId, eventId, updates)
   }
 
-  function addCustomEvent(classId, event) {
-    const events = getEvents(classId)
-    events.push({
+  async function addCustomEvent(classId, event) {
+    const events = await fs.getEvents(classId)
+    const newEvent = {
       id: generateId(),
       ...event,
       type: 'custom',
       isActive: true,
       order: events.length,
-    })
-    saveEvents(classId, events)
+    }
+    await fs.setEvents(classId, [newEvent])
   }
 
-  function updateClassSettings(classId, settings) {
-    const allClasses = getClasses()
-    const cls = allClasses.find(c => c.id === classId)
-    if (cls) {
-      cls.settings = { ...cls.settings, ...settings }
-      saveClasses(allClasses)
-      loadClasses()
-    }
+  async function updateClassSettings(classId, settings) {
+    const cls = classes.find(c => c.id === classId)
+    const merged = { ...cls?.settings, ...settings }
+    await fs.updateClassDoc(classId, { settings: merged })
+    await loadClasses()
   }
 
   function getClassSettings(classId) {
-    const allClasses = getClasses()
-    const cls = allClasses.find(c => c.id === classId)
+    const cls = classes.find(c => c.id === classId)
     return cls?.settings || { studentInputEnabled: true, recordVisibility: 'private' }
   }
 
-  function removeEvent(classId, eventId) {
-    const events = getEvents(classId).filter(e => e.id !== eventId)
-    saveEvents(classId, events)
+  async function removeEvent(classId, eventId) {
+    await fs.removeEvent(classId, eventId)
   }
 
   return {

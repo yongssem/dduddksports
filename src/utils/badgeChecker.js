@@ -1,24 +1,20 @@
 import { getEvents } from '../hooks/useClass'
 import { getPersonalBest } from './scoreCalculator'
+import * as fs from '../services/firestore'
+import { generateId } from './constants'
 
-const BADGE_KEY = (classId) => `fithero_earnedBadges_${classId}`
-
-export function getEarnedBadges(classId) {
-  return JSON.parse(localStorage.getItem(BADGE_KEY(classId)) || '[]')
-}
-
-function saveEarnedBadges(classId, badges) {
-  localStorage.setItem(BADGE_KEY(classId), JSON.stringify(badges))
+export async function getEarnedBadges(classId) {
+  return fs.getEarnedBadges(classId)
 }
 
 /**
  * Run badge checks for a student after a record is saved.
  * Returns array of newly earned badges (empty if none).
  */
-export function checkBadges(classId, studentId, allRecords) {
-  const earned = getEarnedBadges(classId)
+export async function checkBadges(classId, studentId, allRecords) {
+  const earned = await getEarnedBadges(classId)
   const studentRecords = allRecords.filter(r => r.studentId === studentId)
-  const events = getEvents(classId).filter(e => e.isActive)
+  const events = (await getEvents(classId)).filter(e => e.isActive)
   const newBadges = []
 
   function alreadyHas(badgeName) {
@@ -28,6 +24,7 @@ export function checkBadges(classId, studentId, allRecords) {
   function award(badgeName, emoji, description, detail) {
     if (alreadyHas(badgeName)) return
     const badge = {
+      id: generateId(),
       studentId,
       badgeName,
       emoji,
@@ -56,7 +53,6 @@ export function checkBadges(classId, studentId, allRecords) {
       .sort((a, b) => new Date(a.recordedAt) - new Date(b.recordedAt))
 
     if (eventRecords.length >= 3) {
-      // Check consecutive improvement windows
       for (let i = 0; i <= eventRecords.length - 3; i++) {
         const slice = eventRecords.slice(i, i + 3)
         const improving = event.direction === 'high'
@@ -110,8 +106,9 @@ export function checkBadges(classId, studentId, allRecords) {
     }
   }
 
-  if (newBadges.length > 0) {
-    saveEarnedBadges(classId, earned)
+  // Save newly earned badges to Firestore
+  for (const badge of newBadges) {
+    await fs.saveEarnedBadge(classId, badge)
   }
 
   return newBadges
@@ -120,9 +117,9 @@ export function checkBadges(classId, studentId, allRecords) {
 /**
  * Get all badge definitions with earned status for a student.
  */
-export function getBadgeStatus(classId, studentId) {
-  const earned = getEarnedBadges(classId).filter(b => b.studentId === studentId)
-  const events = getEvents(classId).filter(e => e.isActive)
+export async function getBadgeStatus(classId, studentId) {
+  const earned = (await getEarnedBadges(classId)).filter(b => b.studentId === studentId)
+  const events = (await getEvents(classId)).filter(e => e.isActive)
 
   const baseBadges = [
     { name: '첫 발자국', emoji: '🌱', condition: '최초 1회 기록 입력' },

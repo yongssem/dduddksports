@@ -11,57 +11,55 @@ export default function StudentList({ classId }) {
   const [bulkText, setBulkText] = useState('')
 
   useEffect(() => {
-    setStudents(getStudents(classId))
+    refresh()
   }, [classId])
 
-  function refresh() {
-    setStudents(getStudents(classId))
+  async function refresh() {
+    setStudents(await getStudents(classId))
   }
 
-  function addSingleStudent() {
+  async function addSingleStudent() {
     if (!newName.trim()) return
-    const all = getStudents(classId)
-    all.push({
+    const all = await getStudents(classId)
+    const newStudent = {
       id: generateId(),
       number: all.length + 1,
       name: newName.trim(),
       pin: null,
       createdAt: new Date().toISOString(),
-    })
-    saveStudents(classId, all)
+    }
+    await saveStudents(classId, [...all, newStudent])
     setNewName('')
-    refresh()
+    await refresh()
   }
 
-  function addBulkStudents() {
+  async function addBulkStudents() {
     if (!bulkText.trim()) return
     const names = bulkText
       .split(/[\n,\t]+/)
       .map(n => n.trim())
       .filter(n => n.length > 0)
 
-    const all = getStudents(classId)
+    const all = await getStudents(classId)
     const startNum = all.length + 1
-    names.forEach((name, i) => {
-      all.push({
-        id: generateId(),
-        number: startNum + i,
-        name,
-        pin: null,
-        createdAt: new Date().toISOString(),
-      })
-    })
-    saveStudents(classId, all)
+    const newStudents = names.map((name, i) => ({
+      id: generateId(),
+      number: startNum + i,
+      name,
+      pin: null,
+      createdAt: new Date().toISOString(),
+    }))
+    await saveStudents(classId, [...all, ...newStudents])
     setBulkText('')
     setShowAdd(false)
-    refresh()
+    await refresh()
   }
 
-  function removeStudent(studentId) {
-    const all = getStudents(classId).filter(s => s.id !== studentId)
+  async function removeStudent(studentId) {
+    const all = (await getStudents(classId)).filter(s => s.id !== studentId)
     all.forEach((s, i) => { s.number = i + 1 })
-    saveStudents(classId, all)
-    refresh()
+    await saveStudents(classId, all)
+    await refresh()
   }
 
   return (

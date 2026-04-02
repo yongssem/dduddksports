@@ -1,32 +1,21 @@
 import { useState, useEffect, useCallback } from 'react'
 import { generateId } from '../utils/constants'
-
-function getRecordsKey(classId) {
-  return `fithero_records_${classId}`
-}
-
-function getAllRecords(classId) {
-  return JSON.parse(localStorage.getItem(getRecordsKey(classId)) || '[]')
-}
-
-function saveAllRecords(classId, records) {
-  localStorage.setItem(getRecordsKey(classId), JSON.stringify(records))
-}
+import * as fs from '../services/firestore'
 
 export function useRecords(classId) {
   const [records, setRecords] = useState([])
 
-  const loadRecords = useCallback(() => {
+  const loadRecords = useCallback(async () => {
     if (!classId) return
-    setRecords(getAllRecords(classId))
+    const data = await fs.getRecords(classId)
+    setRecords(data)
   }, [classId])
 
   useEffect(() => {
     loadRecords()
   }, [loadRecords])
 
-  function addRecord(studentId, studentName, eventId, eventName, value, memo = '') {
-    const all = getAllRecords(classId)
+  async function addRecord(studentId, studentName, eventId, eventName, value, memo = '') {
     const record = {
       id: generateId(),
       studentId,
@@ -37,9 +26,8 @@ export function useRecords(classId) {
       memo,
       recordedAt: new Date().toISOString(),
     }
-    all.push(record)
-    saveAllRecords(classId, all)
-    loadRecords()
+    await fs.addRecord(classId, record)
+    await loadRecords()
     return record
   }
 
@@ -53,10 +41,9 @@ export function useRecords(classId) {
       .sort((a, b) => new Date(a.recordedAt) - new Date(b.recordedAt))
   }
 
-  function deleteRecord(recordId) {
-    const all = getAllRecords(classId).filter(r => r.id !== recordId)
-    saveAllRecords(classId, all)
-    loadRecords()
+  async function deleteRecord(recordId) {
+    await fs.deleteRecord(classId, recordId)
+    await loadRecords()
   }
 
   return {

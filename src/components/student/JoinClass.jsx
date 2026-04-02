@@ -12,21 +12,27 @@ export default function JoinClass() {
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const { studentJoin } = useAuth()
   const { findClassByInviteCode } = useClass()
 
-  function handleCodeSubmit(e) {
+  async function handleCodeSubmit(e) {
     e.preventDefault()
     setError('')
-    const cls = findClassByInviteCode(inviteCode.trim())
-    if (!cls) {
-      setError('올바른 초대코드를 입력해주세요.')
-      return
+    setLoading(true)
+    try {
+      const cls = await findClassByInviteCode(inviteCode.trim())
+      if (!cls) {
+        setError('올바른 초대코드를 입력해주세요.')
+        return
+      }
+      setFoundClass(cls)
+      setStudents(await getStudents(cls.id))
+      setStep('select')
+    } finally {
+      setLoading(false)
     }
-    setFoundClass(cls)
-    setStudents(getStudents(cls.id))
-    setStep('select')
   }
 
   function handleStudentSelect(student) {
@@ -83,9 +89,10 @@ export default function JoinClass() {
             {error && <p className="text-red-500 text-sm text-center">{error}</p>}
             <button
               type="submit"
-              className="w-full py-4 bg-gradient-to-r from-mint to-mint-light text-white rounded-2xl font-black text-lg shadow-lg shadow-mint/25 touch-target font-display"
+              disabled={loading}
+              className="w-full py-4 bg-gradient-to-r from-mint to-mint-light text-white rounded-2xl font-black text-lg shadow-lg shadow-mint/25 touch-target font-display disabled:opacity-50"
             >
-              입장하기
+              {loading ? '확인 중...' : '입장하기'}
             </button>
           </form>
         )}

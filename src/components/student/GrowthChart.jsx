@@ -21,11 +21,14 @@ export default function GrowthChart() {
       navigate('/')
       return
     }
-    const activeEvents = getEvents(user.classId).filter(e => e.isActive)
-    setEvents(activeEvents)
-    if (activeEvents.length > 0 && !selectedEventId) {
-      setSelectedEventId(activeEvents[0].id)
+    async function load() {
+      const activeEvents = (await getEvents(user.classId)).filter(e => e.isActive)
+      setEvents(activeEvents)
+      if (activeEvents.length > 0 && !selectedEventId) {
+        setSelectedEventId(activeEvents[0].id)
+      }
     }
+    load()
   }, [user, navigate])
 
   if (!user) return null

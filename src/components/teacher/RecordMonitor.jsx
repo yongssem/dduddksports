@@ -8,8 +8,12 @@ export default function RecordMonitor({ classId }) {
   const { records } = useRecords(classId)
 
   useEffect(() => {
-    setStudents(getStudents(classId))
-    setEvents(getEvents(classId).filter(e => e.isActive))
+    async function load() {
+      setStudents(await getStudents(classId))
+      const allEvents = await getEvents(classId)
+      setEvents(allEvents.filter(e => e.isActive))
+    }
+    load()
   }, [classId])
 
   function getLatestRecord(studentId, eventId) {
