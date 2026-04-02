@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --color-orange: #FF6B35;
+  --color-orange-light: #FF8C5A;
+  --color-orange-dark: #E55A25;
+  --color-mint: #2EC4B6;
+  --color-mint-light: #4DD4C8;
+  --color-mint-dark: #1FA899;
+  --color-navy: #011627;
+  --color-bg: #F7F7F7;
+  --color-bg-card: #FFFFFF;
+  --font-sans: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-navy);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+/* Large touch targets for elementary students */
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
+}
