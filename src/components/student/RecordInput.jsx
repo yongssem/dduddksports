@@ -4,9 +4,11 @@ import { useAuth } from '../../hooks/useAuth'
 import { getEvents, useClass } from '../../hooks/useClass'
 import { useRecords } from '../../hooks/useRecords'
 import { EVENT_ICONS } from '../../utils/constants'
+import { checkBadges } from '../../utils/badgeChecker'
 import Modal from '../common/Modal'
 import ConfettiModal from '../common/ConfettiModal'
 import NavBar from '../common/NavBar'
+import Footer from '../common/Footer'
 
 export default function RecordInput() {
   const { user } = useAuth()
@@ -19,6 +21,7 @@ export default function RecordInput() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [savedRecord, setSavedRecord] = useState(null)
+  const [newBadges, setNewBadges] = useState([])
   const { records, addRecord, getStudentEventRecords } = useRecords(user?.classId)
   const { getClassSettings } = useClass()
   const classSettings = user?.classId ? getClassSettings(user.classId) : {}
@@ -46,6 +49,12 @@ export default function RecordInput() {
     setShowConfirm(false)
     const record = addRecord(user.id, user.name, selectedEvent.id, selectedEvent.name, value, memo)
     setSavedRecord({ value: Number(value), unit: selectedEvent.unit, eventName: selectedEvent.name })
+
+    // Run badge checker with fresh records
+    const freshRecords = JSON.parse(localStorage.getItem(`fithero_records_${user.classId}`) || '[]')
+    const badges = checkBadges(user.classId, user.id, freshRecords)
+    setNewBadges(badges)
+
     setValue('')
     setMemo('')
     setShowSuccess(true)
@@ -55,9 +64,9 @@ export default function RecordInput() {
 
   return (
     <div className="min-h-dvh bg-bg pb-20">
-      <div className="bg-white shadow-sm sticky top-0 z-10">
+      <div className="glass sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3">
-          <h1 className="font-bold text-navy text-lg text-center">기록 입력 ✏️</h1>
+          <h1 className="font-bold text-navy text-lg text-center font-display">기록 입력 ✏️</h1>
         </div>
       </div>
 
@@ -65,11 +74,11 @@ export default function RecordInput() {
         {inputDisabled && (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🔒</div>
-            <h2 className="text-lg font-bold text-navy mb-2">기록 입력이 비활성화되었어요</h2>
+            <h2 className="text-lg font-bold text-navy mb-2 font-display">기록 입력이 비활성화되었어요</h2>
             <p className="text-navy/50">선생님이 직접 기록을 입력하고 있어요.</p>
             <button
               onClick={() => navigate('/student/home')}
-              className="mt-6 px-6 py-3 bg-mint text-white rounded-xl font-medium touch-target"
+              className="mt-6 px-6 py-3 bg-gradient-to-r from-mint to-mint-light text-white rounded-2xl font-bold touch-target font-display shadow-lg shadow-mint/20"
             >
               홈으로 돌아가기
             </button>
@@ -79,8 +88,8 @@ export default function RecordInput() {
         {!inputDisabled && (<>
         {/* Event selector */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-navy/60 mb-2">종목 선택</label>
-          <div className="grid grid-cols-2 gap-2">
+          <label className="block text-sm font-bold text-navy/50 mb-2 font-display">종목 선택</label>
+          <div className="grid grid-cols-2 gap-2.5">
             {events.map(event => {
               const icon = EVENT_ICONS[event.name] || '🎯'
               const isSelected = selectedEventId === event.id
@@ -88,15 +97,15 @@ export default function RecordInput() {
                 <button
                   key={event.id}
                   onClick={() => setSelectedEventId(event.id)}
-                  className={`p-3 rounded-xl text-left transition-all touch-target ${
+                  className={`p-4 rounded-2xl text-left transition-all touch-target ${
                     isSelected
-                      ? 'bg-orange text-white shadow-md scale-[1.02]'
-                      : 'bg-white text-navy shadow-sm'
+                      ? 'bg-gradient-to-br from-orange to-orange-light text-white shadow-lg shadow-orange/25 scale-[1.02]'
+                      : 'card-elevated text-navy'
                   }`}
                 >
-                  <div className="text-lg">{icon}</div>
-                  <div className="font-medium text-sm mt-1">{event.name}</div>
-                  <div className={`text-xs mt-0.5 ${isSelected ? 'text-white/70' : 'text-navy/40'}`}>
+                  <div className="text-xl">{icon}</div>
+                  <div className="font-bold text-sm mt-1.5 font-display">{event.name}</div>
+                  <div className={`text-xs mt-0.5 ${isSelected ? 'text-white/65' : 'text-navy/35'}`}>
                     목표 {event.targetValue}{event.unit}
                   </div>
                 </button>
@@ -109,7 +118,7 @@ export default function RecordInput() {
         {selectedEvent && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-navy/60 mb-2">기록값</label>
+              <label className="block text-sm font-bold text-navy/50 mb-2 font-display">기록값</label>
               <div className="relative">
                 <input
                   type="number"
@@ -119,39 +128,39 @@ export default function RecordInput() {
                   inputMode={isDecimal ? 'decimal' : 'numeric'}
                   step={isDecimal ? '0.1' : '1'}
                   min="0"
-                  className="w-full px-6 py-5 rounded-2xl bg-white border-2 border-gray-200 focus:border-orange focus:outline-none text-3xl font-bold text-center touch-target"
+                  className="w-full px-6 py-5 rounded-2xl bg-white border-2 border-gray-100 focus:border-orange focus:outline-none text-3xl font-black text-center touch-target font-display shadow-sm transition-colors"
                   autoFocus
                 />
-                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-lg text-navy/40 font-medium">
+                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-lg text-navy/35 font-bold font-display">
                   {selectedEvent.unit}
                 </span>
               </div>
-              <div className="text-center mt-2 text-sm text-navy/40">
+              <div className="text-center mt-2 text-sm text-navy/35">
                 목표: {selectedEvent.targetValue}{selectedEvent.unit}
                 {selectedEvent.direction === 'high' ? ' (높을수록 좋음)' : ' (낮을수록 좋음)'}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-navy/60 mb-2">메모 (선택)</label>
+              <label className="block text-sm font-bold text-navy/50 mb-2 font-display">메모 (선택)</label>
               <input
                 type="text"
                 value={memo}
                 onChange={e => setMemo(e.target.value)}
                 placeholder="오늘 컨디션이 좋았다!"
-                className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 focus:border-orange focus:outline-none touch-target"
+                className="w-full px-4 py-3.5 rounded-2xl bg-white border border-gray-100 focus:border-orange focus:outline-none touch-target shadow-sm transition-colors"
               />
             </div>
 
             {/* Recent records */}
             {recentRecords.length > 0 && (
               <div>
-                <p className="text-sm text-navy/50 mb-2">최근 기록</p>
+                <p className="text-sm text-navy/45 mb-2 font-display font-medium">최근 기록</p>
                 <div className="flex gap-2">
                   {recentRecords.map(r => (
-                    <div key={r.id} className="bg-white rounded-lg px-3 py-2 shadow-sm text-sm">
-                      <div className="font-medium text-navy">{r.value}{selectedEvent.unit}</div>
-                      <div className="text-navy/30 text-xs">
+                    <div key={r.id} className="card-elevated rounded-xl px-3.5 py-2.5 text-sm">
+                      <div className="font-bold text-navy font-display">{r.value}{selectedEvent.unit}</div>
+                      <div className="text-navy/30 text-xs mt-0.5">
                         {new Date(r.recordedAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
                       </div>
                     </div>
@@ -163,7 +172,7 @@ export default function RecordInput() {
             <button
               onClick={handleSubmit}
               disabled={!value}
-              className="w-full py-4 bg-orange text-white rounded-2xl font-bold text-lg shadow-lg disabled:opacity-40 touch-target mt-4"
+              className="w-full py-4 bg-gradient-to-r from-orange to-orange-light text-white rounded-2xl font-black text-lg shadow-lg shadow-orange/25 disabled:opacity-40 touch-target mt-4 font-display transition-shadow hover:shadow-xl hover:shadow-orange/30"
             >
               기록하기 💪
             </button>
@@ -181,9 +190,9 @@ export default function RecordInput() {
         onConfirm={confirmRecord}
       >
         <div className="text-center py-4">
-          <div className="text-lg text-navy/60 mb-2">{selectedEvent?.name}</div>
-          <div className="text-4xl font-black text-orange">
-            {value}<span className="text-xl text-navy/40 ml-1">{selectedEvent?.unit}</span>
+          <div className="text-lg text-navy/50 mb-2 font-display">{selectedEvent?.name}</div>
+          <div className="text-4xl font-black text-gradient-orange font-display">
+            {value}<span className="text-xl text-navy/35 ml-1" style={{WebkitTextFillColor: 'unset'}}>{selectedEvent?.unit}</span>
           </div>
         </div>
       </Modal>
@@ -191,12 +200,14 @@ export default function RecordInput() {
       {/* Success confetti */}
       <ConfettiModal
         isOpen={showSuccess}
-        onClose={() => setShowSuccess(false)}
+        onClose={() => { setShowSuccess(false); setNewBadges([]) }}
         value={savedRecord?.value}
         unit={savedRecord?.unit}
         eventName={savedRecord?.eventName}
+        badges={newBadges}
       />
 
+      <Footer />
       <NavBar />
     </div>
   )

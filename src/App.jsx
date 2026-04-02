@@ -8,6 +8,8 @@ import JoinClass from './components/student/JoinClass'
 import StudentHome from './components/student/StudentHome'
 import RecordInput from './components/student/RecordInput'
 import GrowthChart from './components/student/GrowthChart'
+import BadgeCollection from './components/student/BadgeCollection'
+import Leaderboard from './components/student/Leaderboard'
 
 export default function App() {
   return (
@@ -22,6 +24,8 @@ export default function App() {
           <Route path="/student/home" element={<StudentHome />} />
           <Route path="/student/record" element={<RecordInput />} />
           <Route path="/student/growth" element={<GrowthChart />} />
+          <Route path="/student/badges" element={<BadgeCollection />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

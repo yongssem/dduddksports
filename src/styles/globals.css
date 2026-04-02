@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@font-face { font-family: 'GmarketSans'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff') format('woff'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GmarketSans'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff') format('woff'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'GmarketSans'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansLight.woff') format('woff'); font-weight: 300; font-style: normal; font-display: swap; }
+
 @theme {
   --color-orange: #FF6B35;
   --color-orange-light: #FF8C5A;
@@ -8,8 +12,9 @@
   --color-mint-light: #4DD4C8;
   --color-mint-dark: #1FA899;
   --color-navy: #011627;
-  --color-bg: #F7F7F7;
+  --color-bg: #F4F6FA;
   --color-bg-card: #FFFFFF;
+  --font-display: "GmarketSans", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-sans: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
@@ -26,8 +31,161 @@ body {
   min-height: 100dvh;
 }
 
+/* Display font for headings */
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+}
+
 /* Large touch targets for elementary students */
 .touch-target {
   min-height: 48px;
   min-width: 48px;
+}
+
+/* Glass card effect */
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-dark {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Modern card with subtle depth */
+.card-elevated {
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.card-elevated:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Gradient text */
+.text-gradient-orange {
+  background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 50%, #FFB088 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-mint {
+  background: linear-gradient(135deg, #1FA899 0%, #2EC4B6 50%, #4DD4C8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Entry screen */
+.entry-bg {
+  background: linear-gradient(160deg, #FFFFFF 0%, var(--color-bg) 40%, #EEF6F5 100%);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.entry-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes pulse-bg {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.entry-pulse {
+  animation: pulse-bg 6s ease-in-out infinite;
+}
+
+.entry-pulse-delay {
+  animation: pulse-bg 6s ease-in-out 3s infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  50% { opacity: 0.5; transform: scale(0.8) rotate(15deg); }
+}
+
+.entry-sparkle {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+.entry-fade-in {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+.entry-fade-in-delay {
+  animation: fadeInUp 0.6s ease-out 0.15s both;
+}
+
+.entry-fade-in-delay-2 {
+  animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+/* Modern NavBar */
+.nav-modern {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.nav-indicator {
+  position: relative;
+}
+
+.nav-indicator::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--color-orange);
+}
+
+/* Scroll hiding */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Modern header gradient */
+.header-gradient-orange {
+  background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 60%, #FFAA80 100%);
+}
+
+.header-gradient-mint {
+  background: linear-gradient(135deg, #1FA899 0%, #2EC4B6 60%, #5ADECF 100%);
+}
+
+/* Pill button */
+.pill-active {
+  background: var(--color-orange);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.pill-inactive {
+  background: rgba(255, 255, 255, 0.9);
+  color: rgba(1, 22, 39, 0.5);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }

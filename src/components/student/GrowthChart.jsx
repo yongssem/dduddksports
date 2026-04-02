@@ -7,6 +7,7 @@ import { useRecords } from '../../hooks/useRecords'
 import { getPersonalBest, calculateAchievementRate, calculateImprovement, formatValue } from '../../utils/scoreCalculator'
 import { EVENT_ICONS } from '../../utils/constants'
 import NavBar from '../common/NavBar'
+import Footer from '../common/Footer'
 
 export default function GrowthChart() {
   const { user } = useAuth()
@@ -46,15 +47,15 @@ export default function GrowthChart() {
 
   return (
     <div className="min-h-dvh bg-bg pb-20">
-      <div className="bg-white shadow-sm sticky top-0 z-10">
+      <div className="glass sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-3">
-          <h1 className="font-bold text-navy text-lg text-center">성장 그래프 📈</h1>
+          <h1 className="font-bold text-navy text-lg text-center font-display">성장 그래프 📈</h1>
         </div>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* Event tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-1 no-scrollbar">
           {events.map(event => {
             const icon = EVENT_ICONS[event.name] || '🎯'
             const isSelected = selectedEventId === event.id
@@ -62,8 +63,8 @@ export default function GrowthChart() {
               <button
                 key={event.id}
                 onClick={() => setSelectedEventId(event.id)}
-                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap touch-target transition-colors ${
-                  isSelected ? 'bg-mint text-white shadow-md' : 'bg-white text-navy/60 shadow-sm'
+                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm whitespace-nowrap touch-target transition-all font-display font-bold ${
+                  isSelected ? 'pill-active' : 'pill-inactive'
                 }`}
               >
                 <span>{icon}</span>
@@ -76,29 +77,29 @@ export default function GrowthChart() {
         {selectedEvent && eventRecords.length > 0 ? (
           <>
             {/* Chart */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm mb-6">
+            <div className="card-elevated p-5 mb-6">
               <ResponsiveContainer width="100%" height={250}>
                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2EC4B6" stopOpacity={0.3} />
+                      <stop offset="5%" stopColor="#2EC4B6" stopOpacity={0.25} />
                       <stop offset="95%" stopColor="#2EC4B6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis
                     dataKey="name"
-                    tick={{ fontSize: 11, fill: '#011627', opacity: 0.5 }}
+                    tick={{ fontSize: 11, fill: '#011627', opacity: 0.4, fontFamily: 'GmarketSans' }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: '#011627', opacity: 0.5 }}
+                    tick={{ fontSize: 11, fill: '#011627', opacity: 0.4, fontFamily: 'GmarketSans' }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip
-                    contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    contentStyle={{ borderRadius: 16, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', fontFamily: 'GmarketSans' }}
                     formatter={(val) => [`${val}${selectedEvent.unit}`, selectedEvent.name]}
                   />
                   <ReferenceLine
@@ -122,29 +123,29 @@ export default function GrowthChart() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white rounded-xl p-4 shadow-sm text-center">
-                <div className="text-xs text-navy/40 mb-1">최고 기록</div>
-                <div className="text-xl font-bold text-mint">
+              <div className="card-elevated p-4 text-center">
+                <div className="text-xs text-navy/35 mb-1 font-display font-medium">최고 기록</div>
+                <div className="text-xl font-black text-gradient-mint font-display">
                   {best ? formatValue(best.value, selectedEvent.unit) : '-'}
                 </div>
               </div>
-              <div className="bg-white rounded-xl p-4 shadow-sm text-center">
-                <div className="text-xs text-navy/40 mb-1">달성률</div>
-                <div className={`text-xl font-bold ${achievementRate >= 100 ? 'text-orange' : 'text-navy'}`}>
+              <div className="card-elevated p-4 text-center">
+                <div className="text-xs text-navy/35 mb-1 font-display font-medium">달성률</div>
+                <div className={`text-xl font-black font-display ${achievementRate >= 100 ? 'text-gradient-orange' : 'text-navy'}`}>
                   {achievementRate.toFixed(0)}%
                 </div>
               </div>
-              <div className="bg-white rounded-xl p-4 shadow-sm text-center">
-                <div className="text-xs text-navy/40 mb-1">최근 기록</div>
-                <div className="text-xl font-bold text-navy">
+              <div className="card-elevated p-4 text-center">
+                <div className="text-xs text-navy/35 mb-1 font-display font-medium">최근 기록</div>
+                <div className="text-xl font-black text-navy font-display">
                   {eventRecords.length > 0
                     ? formatValue(eventRecords[eventRecords.length - 1].value, selectedEvent.unit)
                     : '-'}
                 </div>
               </div>
-              <div className="bg-white rounded-xl p-4 shadow-sm text-center">
-                <div className="text-xs text-navy/40 mb-1">변화량</div>
-                <div className={`text-xl font-bold ${improvement?.improved ? 'text-mint' : 'text-navy/40'}`}>
+              <div className="card-elevated p-4 text-center">
+                <div className="text-xs text-navy/35 mb-1 font-display font-medium">변화량</div>
+                <div className={`text-xl font-black font-display ${improvement?.improved ? 'text-gradient-mint' : 'text-navy/35'}`}>
                   {improvement
                     ? `${improvement.improved ? '+' : '-'}${formatValue(improvement.diff, selectedEvent.unit)}`
                     : '-'}
@@ -155,11 +156,11 @@ export default function GrowthChart() {
         ) : selectedEvent ? (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">📊</div>
-            <h2 className="text-lg font-bold text-navy mb-2">아직 기록이 없어요!</h2>
-            <p className="text-navy/50 mb-6">기록을 입력하면 성장 그래프를 볼 수 있어요.</p>
+            <h2 className="text-lg font-bold text-navy mb-2 font-display">아직 기록이 없어요!</h2>
+            <p className="text-navy/45 mb-6">기록을 입력하면 성장 그래프를 볼 수 있어요.</p>
             <button
               onClick={() => navigate(`/student/record?eventId=${selectedEvent.id}`)}
-              className="px-6 py-3 bg-orange text-white rounded-xl font-bold touch-target"
+              className="px-6 py-3 bg-gradient-to-r from-orange to-orange-light text-white rounded-2xl font-black touch-target font-display shadow-lg shadow-orange/20"
             >
               기록 입력하기 ✏️
             </button>
@@ -167,11 +168,12 @@ export default function GrowthChart() {
         ) : (
           <div className="text-center py-16 text-navy/40">
             <div className="text-4xl mb-2">📋</div>
-            <p>등록된 종목이 없습니다.</p>
+            <p className="font-display">등록된 종목이 없습니다.</p>
           </div>
         )}
       </div>
 
+      <Footer />
       <NavBar />
     </div>
   )

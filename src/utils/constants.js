@@ -12,7 +12,7 @@ export const DEFAULT_BADGES = [
   { name: '성장왕', emoji: '📈', conditionType: 'consecutive_improve', conditionValue: 3, description: '동일 종목 3회 연속 기록 향상' },
   { name: '종목마스터', emoji: '⭐', conditionType: 'target_achieved', conditionValue: null, description: '특정 종목 목표값 달성' },
   { name: '올라운더', emoji: '👑', conditionType: 'all_events', conditionValue: null, description: '전 종목 1회 이상 기록 보유' },
-  { name: '체력왕', emoji: '🏆', conditionType: 'all_targets', conditionValue: null, description: '전 종목 목표값 달성' },
+  { name: '뚝딱체력왕', emoji: '🏆', conditionType: 'all_targets', conditionValue: null, description: '전 종목 목표값 달성' },
 ]
 
 export const INVITE_CODE_LENGTH = 6
