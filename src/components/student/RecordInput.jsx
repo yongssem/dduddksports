@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { getEvents } from '../../hooks/useClass'
+import { getEvents, useClass } from '../../hooks/useClass'
 import { useRecords } from '../../hooks/useRecords'
 import { EVENT_ICONS } from '../../utils/constants'
 import Modal from '../common/Modal'
@@ -20,6 +20,9 @@ export default function RecordInput() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [savedRecord, setSavedRecord] = useState(null)
   const { records, addRecord, getStudentEventRecords } = useRecords(user?.classId)
+  const { getClassSettings } = useClass()
+  const classSettings = user?.classId ? getClassSettings(user.classId) : {}
+  const inputDisabled = !classSettings.studentInputEnabled
 
   useEffect(() => {
     if (!user || user.role !== 'student') {
@@ -59,6 +62,21 @@ export default function RecordInput() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6">
+        {inputDisabled && (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🔒</div>
+            <h2 className="text-lg font-bold text-navy mb-2">기록 입력이 비활성화되었어요</h2>
+            <p className="text-navy/50">선생님이 직접 기록을 입력하고 있어요.</p>
+            <button
+              onClick={() => navigate('/student/home')}
+              className="mt-6 px-6 py-3 bg-mint text-white rounded-xl font-medium touch-target"
+            >
+              홈으로 돌아가기
+            </button>
+          </div>
+        )}
+
+        {!inputDisabled && (<>
         {/* Event selector */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-navy/60 mb-2">종목 선택</label>
@@ -151,6 +169,7 @@ export default function RecordInput() {
             </button>
           </div>
         )}
+      </>)}
       </div>
 
       {/* Confirm modal */}

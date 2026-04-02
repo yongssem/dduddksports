@@ -57,6 +57,10 @@ export function useClass(teacherId) {
       classNumber: Number(classNumber),
       inviteCode,
       createdAt: new Date().toISOString(),
+      settings: {
+        studentInputEnabled: true,   // 학생 자기입력 허용 여부
+        recordVisibility: 'private', // 'private' (본인+담임) | 'leaderboard' (순위 공개) | 'anonymous' (익명 순위)
+      },
     }
 
     allClasses.push(newClass)
@@ -134,6 +138,22 @@ export function useClass(teacherId) {
     saveEvents(classId, events)
   }
 
+  function updateClassSettings(classId, settings) {
+    const allClasses = getClasses()
+    const cls = allClasses.find(c => c.id === classId)
+    if (cls) {
+      cls.settings = { ...cls.settings, ...settings }
+      saveClasses(allClasses)
+      loadClasses()
+    }
+  }
+
+  function getClassSettings(classId) {
+    const allClasses = getClasses()
+    const cls = allClasses.find(c => c.id === classId)
+    return cls?.settings || { studentInputEnabled: true, recordVisibility: 'private' }
+  }
+
   function removeEvent(classId, eventId) {
     const events = getEvents(classId).filter(e => e.id !== eventId)
     saveEvents(classId, events)
@@ -149,6 +169,8 @@ export function useClass(teacherId) {
     updateEvent,
     addCustomEvent,
     removeEvent,
+    updateClassSettings,
+    getClassSettings,
     refresh: loadClasses,
   }
 }
