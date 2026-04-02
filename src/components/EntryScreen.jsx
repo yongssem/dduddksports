@@ -26,7 +26,7 @@ export default function EntryScreen() {
       <GradeRunnerBackground />
 
       {/* UI overlay — pointer-events-none so canvas drag works */}
-      <div className="relative z-10 min-h-dvh flex flex-col items-center justify-center p-6 pointer-events-none">
+      <div className="relative z-10 min-h-dvh flex flex-col items-center justify-center p-6 pointer-events-none bg-black/20 backdrop-blur-xl">
         {/* Hero section */}
         <div className="text-center mb-8 entry-fade-in">
           <div className="relative inline-block">
@@ -57,30 +57,30 @@ export default function EntryScreen() {
         <div className="w-full max-w-sm space-y-3 entry-fade-in-delay-2 pointer-events-auto">
           <button
             onClick={() => navigate('/teacher/auth')}
-            className="group w-full p-5 bg-gradient-to-r from-orange to-orange-light text-white rounded-2xl shadow-lg shadow-orange/25 active:scale-[0.97] transition-all duration-200 touch-target flex items-center gap-4 hover:shadow-xl hover:shadow-orange/35"
+            className="group w-full p-4 bg-gradient-to-r from-orange to-orange-light text-white rounded-2xl shadow-lg shadow-orange/25 active:scale-[0.97] transition-all duration-200 touch-target flex items-center gap-3 hover:shadow-xl hover:shadow-orange/35"
           >
-            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl shrink-0 group-active:bg-white/30 transition-colors">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-2xl shrink-0 group-active:bg-white/30 transition-colors">
               👨‍🏫
             </div>
             <div className="text-left">
-              <div className="text-lg font-bold font-display">선생님으로 시작</div>
-              <div className="text-white/55 text-sm">학급 만들고 관리하기</div>
+              <div className="text-base font-semibold font-display">선생님으로 시작</div>
+              <div className="text-white/55 text-xs">학급 만들고 관리하기</div>
             </div>
-            <div className="ml-auto text-white/30 text-2xl">→</div>
+            <div className="ml-auto text-white/30 text-xl">→</div>
           </button>
 
           <button
             onClick={() => navigate('/student/join')}
-            className="group w-full p-5 bg-gradient-to-r from-mint to-mint-light text-white rounded-2xl shadow-lg shadow-mint/25 active:scale-[0.97] transition-all duration-200 touch-target flex items-center gap-4 hover:shadow-xl hover:shadow-mint/35"
+            className="group w-full p-4 bg-gradient-to-r from-mint to-mint-light text-white rounded-2xl shadow-lg shadow-mint/25 active:scale-[0.97] transition-all duration-200 touch-target flex items-center gap-3 hover:shadow-xl hover:shadow-mint/35"
           >
-            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl shrink-0 group-active:bg-white/30 transition-colors">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-2xl shrink-0 group-active:bg-white/30 transition-colors">
               🙋
             </div>
             <div className="text-left">
-              <div className="text-lg font-bold font-display">학생으로 참여</div>
-              <div className="text-white/55 text-sm">초대코드로 입장하기</div>
+              <div className="text-base font-semibold font-display">학생으로 참여</div>
+              <div className="text-white/55 text-xs">초대코드로 입장하기</div>
             </div>
-            <div className="ml-auto text-white/30 text-2xl">→</div>
+            <div className="ml-auto text-white/30 text-xl">→</div>
           </button>
         </div>
 

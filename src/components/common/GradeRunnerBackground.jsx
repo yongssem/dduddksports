@@ -10,11 +10,11 @@ const PX = 4;
 const FONT = 'GmarketSans, Pretendard, sans-serif';
 
 const GRADES = [
-  { label: '1등급', words: ['1등급','몸짱','PERFECT','최고','★','뚝딱체력','BEST','짱'], color: '#5DCAA5' },
-  { label: '2등급', words: ['2등급','건강','GREAT','좋아','굿','NICE','탄탄','GOOD'], color: '#85B7EB' },
-  { label: '3등급', words: ['3등급','보통','NORMAL','평균','SO-SO','기본','OK','중간'], color: '#FAC775' },
-  { label: '4등급', words: ['4등급','주의','WARNING','노력','분발','TRY','힘내','UP'], color: '#F0997B' },
-  { label: '5등급', words: ['5등급','위험','DANGER','시작','출발','START','도전','GO'], color: '#ED93B1' },
+  { label: '1등급', words: ['1등급','몸짱','PERFECT','최고','★','뚝딱체력','BEST','짱'], color: '#FFD166' },
+  { label: '2등급', words: ['2등급','건강','GREAT','좋아','굿','NICE','탄탄','GOOD'], color: '#81C784' },
+  { label: '3등급', words: ['3등급','보통','NORMAL','평균','SO-SO','기본','OK','중간'], color: '#FFFFFF' },
+  { label: '4등급', words: ['4등급','주의','WARNING','노력','분발','TRY','힘내','UP'], color: '#FFAB40' },
+  { label: '5등급', words: ['5등급','위험','DANGER','시작','출발','START','도전','GO'], color: '#FF6F61' },
 ];
 
 const COLORS = {
@@ -644,9 +644,15 @@ export default function GradeRunnerBackground() {
     // Inner field half-sizes
     fieldHW: 0, fieldHH: 0,
     textParticles: [],
+    // Runner on oval track
+    trackCx: 0, trackCy: 0, trackRx: 0, trackRy: 0,
     runnerX: 0, runnerY: 0,
     targetX: 0, targetY: 0,
+    targetAngle: 0,
     mouseDown: false,
+    dragging: false,
+    dragStartX: 0,
+    dragStartAngle: 0,
     frameIndex: 0, frameTick: 0,
     rafId: null,
   });
@@ -725,9 +731,16 @@ export default function GradeRunnerBackground() {
       S.fieldHW = S.halfW - trackTotalWidth;
       S.fieldHH = S.halfH - trackTotalWidth;
 
+      // Center oval for runner path (middle of track)
+      S.trackCx = S.cx;
+      S.trackCy = S.cy;
+      S.trackRx = (S.fieldHW + S.halfW) * 0.5;
+      S.trackRy = (S.fieldHH + S.halfH) * 0.5;
+
       S.textParticles = initTextParticles(S.W, S.H);
-      S.runnerX = S.W * 0.5;
-      S.runnerY = S.H * 0.75;
+      S.targetAngle = 0;
+      S.runnerX = S.trackCx + Math.cos(S.targetAngle) * S.trackRx;
+      S.runnerY = S.trackCy + Math.sin(S.targetAngle) * S.trackRy;
       S.targetX = S.runnerX;
       S.targetY = S.runnerY;
     }
@@ -872,34 +885,33 @@ export default function GradeRunnerBackground() {
         const dOuter = stadiumDist(p.x, p.y, cx, cy, halfW, halfH);
         const dField = stadiumDist(p.x, p.y, cx, cy, fieldHW, fieldHH);
 
-        let baseAlpha, color;
+        let baseAlpha = 0.18;
         if (dField <= 1) {
-          // On sand field
-          baseAlpha = 0.16;
-          color = '#6B5C3E';
+          // Sand field 조금 낮게
+          baseAlpha = 0.12;
         } else if (dOuter <= 1) {
-          // On track
-          baseAlpha = 0.5;
-          color = '#ffffff';
-        } else {
-          // On grass
-          baseAlpha = 0.2;
-          color = '#ffffff';
+          // Track 부분 좀 더 또렷하게
+          baseAlpha = 0.22;
         }
 
+        const GRADIENT_COLORS = ['#FFD166', '#81C784', '#FFFFFF', '#FFAB40', '#FF6F61'];
+        const color = GRADIENT_COLORS[p.gradeIndex] || '#FFFFFF';
+
         // Fade near runner
-        const distR = Math.sqrt((p.x - S.runnerX) ** 2 + (p.y - S.runnerY) ** 2);
+        const distR = Math.hypot(p.x - S.runnerX, p.y - S.runnerY);
         const fadeDist = REPEL_RADIUS * 1.5;
         const alpha = distR < fadeDist
-          ? Math.max(0.02, (distR / fadeDist) * baseAlpha)
+          ? Math.max(0.04, (distR / fadeDist) * baseAlpha)
           : baseAlpha;
 
         ctx.save();
-        ctx.font = `500 ${p.fontSize}px ${FONT}`;
+        ctx.font = `700 ${p.fontSize}px ${FONT}`;
         ctx.fillStyle = color;
         ctx.globalAlpha = alpha;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(255,255,255,0.3)';
+        ctx.shadowBlur = 10;
         ctx.fillText(p.word, p.x, p.y);
         ctx.restore();
       }
@@ -994,8 +1006,16 @@ export default function GradeRunnerBackground() {
       S.frameTick++;
       if (S.frameTick >= 6) { S.frameTick = 0; S.frameIndex = (S.frameIndex + 1) % 6; }
 
-      S.runnerX += (S.targetX - S.runnerX) * 0.12;
-      S.runnerY += (S.targetY - S.runnerY) * 0.12;
+      // Idle orbit when not dragging
+      if (!S.dragging) {
+        S.targetAngle += 0.0028;
+      }
+
+      S.targetX = S.trackCx + Math.cos(S.targetAngle) * S.trackRx;
+      S.targetY = S.trackCy + Math.sin(S.targetAngle) * S.trackRy;
+
+      S.runnerX += (S.targetX - S.runnerX) * 0.16;
+      S.runnerY += (S.targetY - S.runnerY) * 0.16;
       S.runnerX = Math.max(60, Math.min(S.W - 60, S.runnerX));
       S.runnerY = Math.max(50, Math.min(S.H - 50, S.runnerY));
 
@@ -1008,20 +1028,24 @@ export default function GradeRunnerBackground() {
 
     // ── Pointer events ──
     function onDown(e) {
-      // Allow drag from anywhere on canvas
       S.mouseDown = true;
-      S.targetX = e.clientX;
-      S.targetY = e.clientY;
+      S.dragging = true;
+      const dx = e.clientX - S.trackCx;
+      const dy = e.clientY - S.trackCy;
+      S.targetAngle = Math.atan2(dy, dx);
+      S.dragStartX = e.clientX;
+      S.dragStartAngle = S.targetAngle;
       canvas.classList.add('grabbing');
       canvas.setPointerCapture(e.pointerId);
     }
     function onMove(e) {
-      if (!S.mouseDown) return;
-      S.targetX = e.clientX;
-      S.targetY = e.clientY;
+      if (!S.dragging) return;
+      const deltaX = e.clientX - S.dragStartX;
+      S.targetAngle = S.dragStartAngle + deltaX * 0.005;
     }
     function onUp() {
       S.mouseDown = false;
+      S.dragging = false;
       canvas.classList.remove('grabbing');
     }
 
