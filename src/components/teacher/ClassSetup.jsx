@@ -41,16 +41,16 @@ export default function ClassSetup({ classData, onRefresh }) {
 
   return (
     <div>
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+      <div className="grid grid-cols-4 gap-1.5 mb-6">
         {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap touch-target transition-colors ${
-              tab === t.id ? 'bg-orange text-white' : 'bg-white text-navy/60 shadow-sm'
+            className={`flex flex-col items-center gap-1 px-1.5 py-2.5 rounded-xl text-[11px] font-bold touch-target transition-all font-display ${
+              tab === t.id ? 'bg-gradient-to-r from-orange to-orange-light text-white shadow-md shadow-orange/20' : 'pill-inactive'
             }`}
           >
-            <span>{t.icon}</span>
+            <span className="text-lg">{t.icon}</span>
             <span>{t.label}</span>
           </button>
         ))}
