@@ -58,7 +58,7 @@ export default function GrowthChart() {
 
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* Event tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar -mx-4 px-4">
+        <div className="grid grid-cols-3 gap-2 mb-6">
           {events.map(event => {
             const icon = EVENT_ICONS[event.name] || '🎯'
             const isSelected = selectedEventId === event.id
@@ -66,12 +66,12 @@ export default function GrowthChart() {
               <button
                 key={event.id}
                 onClick={() => setSelectedEventId(event.id)}
-                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm whitespace-nowrap touch-target transition-all font-display font-bold ${
+                className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl text-[11px] touch-target transition-all font-display font-bold ${
                   isSelected ? 'pill-active' : 'pill-inactive'
                 }`}
               >
-                <span>{icon}</span>
-                <span>{event.name}</span>
+                <span className="text-base">{icon}</span>
+                <span className="leading-tight text-center">{event.name}</span>
               </button>
             )
           })}
