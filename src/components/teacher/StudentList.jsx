@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getStudents, saveStudents } from '../../hooks/useClass'
+import { updateStudent } from '../../services/firestore'
 import { generateId } from '../../utils/constants'
 import Modal from '../common/Modal'
 
@@ -55,6 +56,11 @@ export default function StudentList({ classId }) {
     await refresh()
   }
 
+  async function resetPin(studentId) {
+    await updateStudent(classId, studentId, { pin: null })
+    await refresh()
+  }
+
   async function removeStudent(studentId) {
     const all = (await getStudents(classId)).filter(s => s.id !== studentId)
     all.forEach((s, i) => { s.number = i + 1 })
@@ -89,13 +95,24 @@ export default function StudentList({ classId }) {
                   {student.number}
                 </span>
                 <span className="font-medium text-navy">{student.name}</span>
+                {student.pin && <span className="text-xs text-mint/60">🔒</span>}
               </div>
-              <button
-                onClick={() => removeStudent(student.id)}
-                className="text-red-400 text-sm touch-target px-2"
-              >
-                삭제
-              </button>
+              <div className="flex items-center gap-1">
+                {student.pin && (
+                  <button
+                    onClick={() => resetPin(student.id)}
+                    className="text-orange text-xs touch-target px-2"
+                  >
+                    PIN초기화
+                  </button>
+                )}
+                <button
+                  onClick={() => removeStudent(student.id)}
+                  className="text-red-400 text-sm touch-target px-2"
+                >
+                  삭제
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -140,7 +157,7 @@ export default function StudentList({ classId }) {
             <textarea
               value={bulkText}
               onChange={e => setBulkText(e.target.value)}
-              placeholder={"이름을 줄바꿈 또는 쉼표로 구분하여 입력\n예:\n김철수\n이영희\n박지민"}
+              placeholder={"이름을 줄바꾸 또는 쉼표로 구분하여 입력\n예:\n김철수\n이영희\n박지민"}
               rows={6}
               className="w-full px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-orange focus:outline-none resize-none"
             />
