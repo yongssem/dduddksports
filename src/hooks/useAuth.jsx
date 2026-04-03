@@ -5,6 +5,8 @@ import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth'
@@ -13,11 +15,36 @@ import { createTeacher, getTeacherByName, getTeacherById } from '../services/fir
 const AuthContext = createContext(null)
 const googleProvider = new GoogleAuthProvider()
 
+// 카카오톡, 라인 등 인앱 브라우저 감지
+function isInAppBrowser() {
+  const ua = navigator.userAgent || ''
+  return /KAKAOTALK|NAVER|Line|Instagram|FBAN|FBAV|Twitter/i.test(ua)
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // 리다이렉트 로그인 결과 처리 (카톡 인앱 브라우저 등)
+    getRedirectResult(auth).then(async (result) => {
+      if (result?.user) {
+        const { uid, displayName, email } = result.user
+        let teacher = await getTeacherById(uid)
+        if (!teacher) {
+          teacher = {
+            id: uid,
+            name: displayName || email.split('@')[0],
+            email,
+            firebaseUid: uid,
+          }
+          await createTeacher(teacher)
+        }
+        const userData = { id: teacher.id, name: teacher.name, role: 'teacher' }
+        persistUser(userData)
+      }
+    }).catch(() => {})
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         const saved = localStorage.getItem('fithero_currentUser')
@@ -78,15 +105,20 @@ export function AuthProvider({ children }) {
   }
 
   // ── Google 로그인/가입 (자동 판별) ──
+  // 인앱 브라우저에서는 redirect, 일반 브라우저에서는 popup 사용
   async function teacherGoogleLogin() {
+    if (isInAppBrowser()) {
+      await signInWithRedirect(auth, googleProvider)
+      // 리다이렉트 후 결과는 위 useEffect의 getRedirectResult에서 처리
+      return
+    }
+
     const cred = await signInWithPopup(auth, googleProvider)
     const { uid, displayName, email } = cred.user
 
-    // 이미 등록된 선생님인지 확인
     let teacher = await getTeacherById(uid)
 
     if (!teacher) {
-      // 최초 Google 로그인 → 자동 가입
       teacher = {
         id: uid,
         name: displayName || email.split('@')[0],
