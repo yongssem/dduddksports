@@ -2,15 +2,17 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useClass, getStudents } from '../../hooks/useClass'
+import { updateStudent } from '../../services/firestore'
 import Footer from '../common/Footer'
 
 export default function JoinClass() {
-  const [step, setStep] = useState('code') // 'code' | 'select' | 'pin'
+  const [step, setStep] = useState('code') // 'code' | 'select' | 'setup-pin' | 'pin'
   const [inviteCode, setInviteCode] = useState('')
   const [foundClass, setFoundClass] = useState(null)
   const [students, setStudents] = useState([])
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [pin, setPin] = useState('')
+  const [pinConfirm, setPinConfirm] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
@@ -37,17 +39,39 @@ export default function JoinClass() {
 
   function handleStudentSelect(student) {
     setSelectedStudent(student)
+    setPin('')
+    setPinConfirm('')
+    setError('')
     if (student.pin) {
       setStep('pin')
     } else {
-      completeJoin(student)
+      setStep('setup-pin')
+    }
+  }
+
+  async function handleSetupPinSubmit(e) {
+    e.preventDefault()
+    if (pin.length !== 4) {
+      setError('4자리 숫자를 입력해주세요.')
+      return
+    }
+    if (pin !== pinConfirm) {
+      setError('PIN이 일치하지 않아요. 다시 확인해주세요.')
+      return
+    }
+    setLoading(true)
+    try {
+      await updateStudent(foundClass.id, selectedStudent.id, { pin })
+      completeJoin(selectedStudent)
+    } finally {
+      setLoading(false)
     }
   }
 
   function handlePinSubmit(e) {
     e.preventDefault()
     if (pin !== selectedStudent.pin) {
-      setError('PIN이 일치하지 않습니다.')
+      setError('PIN이 일치하지 않아요.')
       return
     }
     completeJoin(selectedStudent)
@@ -61,15 +85,20 @@ export default function JoinClass() {
 
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center p-6 bg-bg">
-      <button onClick={() => step === 'code' ? navigate('/') : setStep('code')} className="absolute top-4 left-4 text-navy/40 text-2xl touch-target hover:text-navy/60 transition-colors">
+      <button onClick={() => {
+        if (step === 'code') navigate('/')
+        else if (step === 'select') setStep('code')
+        else setStep('select')
+      }} className="absolute top-4 left-4 text-navy/40 text-2xl touch-target hover:text-navy/60 transition-colors">
         ←
       </button>
 
       <div className="text-center mb-8">
-        <div className="text-5xl mb-3">🙋</div>
+        <div className="text-5xl mb-3">{step === 'setup-pin' ? '🔐' : '🙋'}</div>
         <h1 className="text-2xl font-black text-navy font-display">
           {step === 'code' && '초대코드 입력'}
           {step === 'select' && '내 이름 선택'}
+          {step === 'setup-pin' && 'PIN 설정'}
           {step === 'pin' && 'PIN 입력'}
         </h1>
       </div>
@@ -121,6 +150,42 @@ export default function JoinClass() {
               <p className="text-center text-navy/35 py-8 font-display">아직 등록된 학생이 없습니다.</p>
             )}
           </div>
+        )}
+
+        {step === 'setup-pin' && (
+          <form onSubmit={handleSetupPinSubmit} className="space-y-4">
+            <p className="text-center text-navy/50 font-display">
+              <strong>{selectedStudent.name}</strong> 학생의<br/>비밀번호 4자리를 만들어주세요
+            </p>
+            <input
+              type="password"
+              value={pin}
+              onChange={e => { setPin(e.target.value.replace(/\D/g, '')); setError('') }}
+              placeholder="PIN 4자리"
+              maxLength={4}
+              inputMode="numeric"
+              className="w-full px-4 py-5 rounded-2xl bg-white border-2 border-gray-100 focus:border-mint focus:outline-none text-2xl text-center tracking-widest touch-target shadow-sm transition-colors"
+              autoFocus
+            />
+            <input
+              type="password"
+              value={pinConfirm}
+              onChange={e => { setPinConfirm(e.target.value.replace(/\D/g, '')); setError('') }}
+              placeholder="한 번 더 입력"
+              maxLength={4}
+              inputMode="numeric"
+              className="w-full px-4 py-5 rounded-2xl bg-white border-2 border-gray-100 focus:border-mint focus:outline-none text-2xl text-center tracking-widest touch-target shadow-sm transition-colors"
+            />
+            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+            <button
+              type="submit"
+              disabled={loading || pin.length !== 4 || pinConfirm.length !== 4}
+              className="w-full py-4 bg-gradient-to-r from-mint to-mint-light text-white rounded-2xl font-black text-lg shadow-lg shadow-mint/25 touch-target font-display disabled:opacity-50"
+            >
+              {loading ? '저장 중...' : '설정 완료'}
+            </button>
+            <p className="text-center text-navy/30 text-xs">다른 기기에서 로그인할 때 필요해요</p>
+          </form>
         )}
 
         {step === 'pin' && (

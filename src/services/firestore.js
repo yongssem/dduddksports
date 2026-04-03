@@ -66,6 +66,10 @@ export async function addStudents(classId, students) {
   await Promise.all(promises)
 }
 
+export async function updateStudent(classId, studentId, updates) {
+  await updateDoc(doc(db, 'classes', classId, 'students', studentId), updates)
+}
+
 export async function removeStudent(classId, studentId) {
   await deleteDoc(doc(db, 'classes', classId, 'students', studentId))
 }
