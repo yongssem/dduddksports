@@ -4,12 +4,15 @@ import { updateStudent } from '../../services/firestore'
 import { generateId } from '../../utils/constants'
 import Modal from '../common/Modal'
 
+const EMPTY_ROW = () => ({ name: '', pin: '' })
+
 export default function StudentList({ classId }) {
   const [students, setStudents] = useState([])
   const [showAdd, setShowAdd] = useState(false)
   const [bulkMode, setBulkMode] = useState(false)
   const [newName, setNewName] = useState('')
-  const [bulkText, setBulkText] = useState('')
+  const [bulkRows, setBulkRows] = useState(() => Array.from({ length: 5 }, EMPTY_ROW))
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     refresh()
@@ -34,26 +37,40 @@ export default function StudentList({ classId }) {
     await refresh()
   }
 
-  async function addBulkStudents() {
-    if (!bulkText.trim()) return
-    const names = bulkText
-      .split(/[\n,\t]+/)
-      .map(n => n.trim())
-      .filter(n => n.length > 0)
+  function updateBulkRow(index, field, value) {
+    setBulkRows(prev => prev.map((row, i) => i === index ? { ...row, [field]: value } : row))
+  }
 
-    const all = await getStudents(classId)
-    const startNum = all.length + 1
-    const newStudents = names.map((name, i) => ({
-      id: generateId(),
-      number: startNum + i,
-      name,
-      pin: null,
-      createdAt: new Date().toISOString(),
-    }))
-    await saveStudents(classId, [...all, ...newStudents])
-    setBulkText('')
-    setShowAdd(false)
-    await refresh()
+  function addMoreRows() {
+    setBulkRows(prev => [...prev, ...Array.from({ length: 5 }, EMPTY_ROW)])
+  }
+
+  function removeBulkRow(index) {
+    setBulkRows(prev => prev.length <= 1 ? [EMPTY_ROW()] : prev.filter((_, i) => i !== index))
+  }
+
+  async function submitBulkStudents() {
+    const validRows = bulkRows.filter(row => row.name.trim())
+    if (validRows.length === 0) return
+
+    setLoading(true)
+    try {
+      const all = await getStudents(classId)
+      const startNum = all.length + 1
+      const newStudents = validRows.map((row, i) => ({
+        id: generateId(),
+        number: startNum + i,
+        name: row.name.trim(),
+        pin: row.pin.length === 4 ? row.pin : null,
+        createdAt: new Date().toISOString(),
+      }))
+      await saveStudents(classId, [...all, ...newStudents])
+      setBulkRows(Array.from({ length: 5 }, EMPTY_ROW))
+      setShowAdd(false)
+      await refresh()
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function resetPin(studentId) {
@@ -67,6 +84,8 @@ export default function StudentList({ classId }) {
     await saveStudents(classId, all)
     await refresh()
   }
+
+  const validCount = bulkRows.filter(r => r.name.trim()).length
 
   return (
     <div>
@@ -154,16 +173,64 @@ export default function StudentList({ classId }) {
           </div>
         ) : (
           <div className="space-y-3">
-            <textarea
-              value={bulkText}
-              onChange={e => setBulkText(e.target.value)}
-              placeholder={"이름을 줄바꾸 또는 쉼표로 구분하여 입력\n예:\n김철수\n이영희\n박지민"}
-              rows={6}
-              className="w-full px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-orange focus:outline-none resize-none"
-            />
-            <button onClick={addBulkStudents} className="w-full py-3 bg-orange text-white rounded-lg font-bold touch-target">
-              일괄 추가
+            {/* 헤더 */}
+            <div className="grid grid-cols-[32px_1fr_80px_28px] gap-2 text-xs text-navy/40 font-medium px-1">
+              <span>번호</span>
+              <span>이름</span>
+              <span>PIN</span>
+              <span></span>
+            </div>
+
+            {/* 입력 행들 */}
+            <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+              {bulkRows.map((row, i) => (
+                <div key={i} className="grid grid-cols-[32px_1fr_80px_28px] gap-2 items-center">
+                  <span className="text-sm text-navy/40 text-center font-medium">
+                    {students.length + i + 1}
+                  </span>
+                  <input
+                    type="text"
+                    value={row.name}
+                    onChange={e => updateBulkRow(i, 'name', e.target.value)}
+                    placeholder="이름"
+                    className="px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:border-orange focus:outline-none text-sm touch-target"
+                  />
+                  <input
+                    type="text"
+                    value={row.pin}
+                    onChange={e => updateBulkRow(i, 'pin', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="선택"
+                    inputMode="numeric"
+                    maxLength={4}
+                    className="px-2 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:border-mint focus:outline-none text-sm text-center touch-target"
+                  />
+                  <button
+                    onClick={() => removeBulkRow(i)}
+                    className="text-red-300 hover:text-red-500 text-lg leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* 행 추가 */}
+            <button
+              onClick={addMoreRows}
+              className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-lg text-navy/40 text-sm font-medium hover:border-mint hover:text-mint transition-colors touch-target"
+            >
+              + 5행 추가
             </button>
+
+            {/* 등록 버튼 */}
+            <button
+              onClick={submitBulkStudents}
+              disabled={loading || validCount === 0}
+              className="w-full py-3 bg-orange text-white rounded-lg font-bold touch-target disabled:opacity-50"
+            >
+              {loading ? '등록 중...' : `${validCount}명 일괄 등록`}
+            </button>
+            <p className="text-center text-navy/30 text-xs">PIN은 비워두면 학생이 첫 접속 시 직접 설정해요</p>
           </div>
         )}
       </Modal>
