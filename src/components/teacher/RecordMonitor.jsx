@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { getStudents, getEvents } from '../../hooks/useClass'
 import { useRecords } from '../../hooks/useRecords'
+import Modal from '../common/Modal'
 
 export default function RecordMonitor({ classId }) {
   const [students, setStudents] = useState([])
   const [events, setEvents] = useState([])
   const [expandedStudentId, setExpandedStudentId] = useState(null)
-  const { records } = useRecords(classId)
+  const [confirmDelete, setConfirmDelete] = useState(null)
+  const { records, deleteRecord } = useRecords(classId)
 
   useEffect(() => {
     async function load() {
@@ -16,13 +18,6 @@ export default function RecordMonitor({ classId }) {
     }
     load()
   }, [classId])
-
-  function getLatestRecord(studentId, eventId) {
-    const studentRecords = records
-      .filter(r => r.studentId === studentId && r.eventId === eventId)
-      .sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt))
-    return studentRecords[0] || null
-  }
 
   function getBestRecord(studentId, eventId) {
     const event = events.find(e => e.id === eventId)
@@ -51,6 +46,12 @@ export default function RecordMonitor({ classId }) {
       grouped[date].push(r)
     }
     return grouped
+  }
+
+  async function handleDeleteConfirm() {
+    if (!confirmDelete) return
+    await deleteRecord(confirmDelete.id)
+    setConfirmDelete(null)
   }
 
   const totalRecords = records.length
@@ -144,13 +145,21 @@ export default function RecordMonitor({ classId }) {
                                       return (
                                         <span
                                           key={r.id}
-                                          className={`inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg ${
+                                          className={`inline-flex items-center gap-1.5 text-xs pl-2.5 pr-1 py-1 rounded-lg ${
                                             achieved ? 'bg-mint/10 text-mint' : 'bg-white text-navy'
                                           } shadow-sm`}
                                         >
                                           <span className="font-medium">{r.eventName}</span>
                                           <span className="font-bold">{r.value}{event?.unit}</span>
                                           {achieved && <span>✅</span>}
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setConfirmDelete(r) }}
+                                            type="button"
+                                            className="ml-0.5 w-6 h-6 rounded-md bg-red-50 text-red-500 flex items-center justify-center text-sm active:bg-red-100"
+                                            aria-label="기록 삭제"
+                                          >
+                                            ×
+                                          </button>
                                         </span>
                                       )
                                     })}
@@ -169,6 +178,23 @@ export default function RecordMonitor({ classId }) {
           </table>
         </div>
       )}
+
+      <Modal
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        title="기록 삭제"
+        confirmText="삭제"
+      >
+        {confirmDelete && (
+          <p className="text-sm">
+            <strong className="text-navy">{confirmDelete.studentName}</strong>의{' '}
+            <strong className="text-navy">{confirmDelete.eventName} {confirmDelete.value}</strong>{' '}
+            기록을 삭제할까요?
+          </p>
+        )}
+        <p className="text-xs text-red-500 mt-2">삭제한 기록은 되돌릴 수 없습니다.</p>
+      </Modal>
     </div>
   )
 }

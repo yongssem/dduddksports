@@ -13,6 +13,7 @@ export default function StudentList({ classId }) {
   const [newName, setNewName] = useState('')
   const [bulkRows, setBulkRows] = useState(() => Array.from({ length: 5 }, EMPTY_ROW))
   const [loading, setLoading] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   useEffect(() => {
     refresh()
@@ -78,10 +79,12 @@ export default function StudentList({ classId }) {
     await refresh()
   }
 
-  async function removeStudent(studentId) {
-    const all = (await getStudents(classId)).filter(s => s.id !== studentId)
+  async function confirmAndRemoveStudent() {
+    if (!confirmDelete) return
+    const all = (await getStudents(classId)).filter(s => s.id !== confirmDelete.id)
     all.forEach((s, i) => { s.number = i + 1 })
     await saveStudents(classId, all)
+    setConfirmDelete(null)
     await refresh()
   }
 
@@ -108,34 +111,45 @@ export default function StudentList({ classId }) {
       ) : (
         <div className="space-y-2">
           {students.map(student => (
-            <div key={student.id} className="flex items-center justify-between bg-white rounded-xl p-4 shadow-sm">
-              <div className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-mint/10 text-mint font-bold flex items-center justify-center text-sm">
-                  {student.number}
-                </span>
-                <span className="font-medium text-navy">{student.name}</span>
-                {student.pin && <span className="text-xs text-mint/60">🔒</span>}
-              </div>
-              <div className="flex items-center gap-1">
-                {student.pin && (
-                  <button
-                    onClick={() => resetPin(student.id)}
-                    className="text-orange text-xs touch-target px-2"
-                  >
-                    PIN초기화
-                  </button>
-                )}
+            <div key={student.id} className="flex items-center gap-2 bg-white rounded-xl p-3 shadow-sm">
+              <span className="shrink-0 w-8 h-8 rounded-full bg-mint/10 text-mint font-bold flex items-center justify-center text-sm">
+                {student.number}
+              </span>
+              <span className="flex-1 min-w-0 font-medium text-navy truncate">{student.name}</span>
+              {student.pin && <span className="shrink-0 text-xs">🔒</span>}
+              {student.pin && (
                 <button
-                  onClick={() => removeStudent(student.id)}
-                  className="text-red-400 text-sm touch-target px-2"
+                  onClick={() => resetPin(student.id)}
+                  type="button"
+                  className="shrink-0 px-3 h-10 rounded-lg bg-orange/10 text-orange text-xs font-bold active:bg-orange/20"
                 >
-                  삭제
+                  PIN
                 </button>
-              </div>
+              )}
+              <button
+                onClick={() => setConfirmDelete(student)}
+                type="button"
+                className="shrink-0 px-3 h-10 rounded-lg bg-red-50 text-red-500 text-xs font-bold active:bg-red-100"
+              >
+                삭제
+              </button>
             </div>
           ))}
         </div>
       )}
+
+      <Modal
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={confirmAndRemoveStudent}
+        title="학생 삭제"
+        confirmText="삭제"
+      >
+        <p className="text-sm">
+          <strong className="text-navy">{confirmDelete?.number}번 {confirmDelete?.name}</strong> 학생을 삭제할까요?
+        </p>
+        <p className="text-xs text-red-500 mt-2">삭제한 학생은 되돌릴 수 없으며, 기록은 그대로 남아 있습니다.</p>
+      </Modal>
 
       <Modal
         isOpen={showAdd}
