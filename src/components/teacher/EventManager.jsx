@@ -7,6 +7,7 @@ export default function EventManager({ classId }) {
   const [events, setEvents] = useState([])
   const [showAdd, setShowAdd] = useState(false)
   const [newEvent, setNewEvent] = useState({ name: '', unit: '회', direction: 'high', targetValue: '' })
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   useEffect(() => {
     refresh()
@@ -44,9 +45,11 @@ export default function EventManager({ classId }) {
     await refresh()
   }
 
-  async function removeEvent(eventId) {
-    const all = (await getEvents(classId)).filter(e => e.id !== eventId)
+  async function confirmAndRemoveEvent() {
+    if (!confirmDelete) return
+    const all = (await getEvents(classId)).filter(e => e.id !== confirmDelete.id)
     await saveEvents(classId, all)
+    setConfirmDelete(null)
     await refresh()
   }
 
@@ -66,34 +69,49 @@ export default function EventManager({ classId }) {
 
       <div className="space-y-2">
         {events.map(event => (
-          <div key={event.id} className="flex items-center justify-between bg-white rounded-xl p-4 shadow-sm">
-            <div className="flex items-center gap-3 flex-1">
-              <button
-                onClick={() => toggleEvent(event.id)}
-                className={`w-12 h-7 rounded-full transition-colors relative ${event.isActive ? 'bg-mint' : 'bg-gray-300'}`}
-              >
-                <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition-transform ${event.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-              <div>
-                <div className="font-medium text-navy flex items-center gap-2">
-                  {event.name}
-                  {event.type === 'paps' && (
-                    <span className="text-xs bg-orange/10 text-orange px-2 py-0.5 rounded-full">PAPS</span>
-                  )}
-                </div>
-                <div className="text-sm text-navy/50">
-                  목표: {event.targetValue}{event.unit} · {event.direction === 'high' ? '높을수록 좋음' : '낮을수록 좋음'}
-                </div>
+          <div key={event.id} className="flex items-center gap-2 bg-white rounded-xl p-3 shadow-sm">
+            <button
+              onClick={() => toggleEvent(event.id)}
+              className={`shrink-0 w-12 h-7 rounded-full transition-colors relative ${event.isActive ? 'bg-mint' : 'bg-gray-300'}`}
+            >
+              <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition-transform ${event.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-navy flex items-center gap-2">
+                <span className="truncate">{event.name}</span>
+                {event.type === 'paps' && (
+                  <span className="shrink-0 text-xs bg-orange/10 text-orange px-2 py-0.5 rounded-full">PAPS</span>
+                )}
+              </div>
+              <div className="text-sm text-navy/50 truncate">
+                목표: {event.targetValue}{event.unit} · {event.direction === 'high' ? '높을수록 좋음' : '낮을수록 좋음'}
               </div>
             </div>
             {event.type === 'custom' && (
-              <button onClick={() => removeEvent(event.id)} className="text-red-400 text-sm touch-target px-2">
+              <button
+                onClick={() => setConfirmDelete(event)}
+                type="button"
+                className="shrink-0 px-3 h-10 rounded-lg bg-red-50 text-red-500 text-xs font-bold active:bg-red-100"
+              >
                 삭제
               </button>
             )}
           </div>
         ))}
       </div>
+
+      <Modal
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={confirmAndRemoveEvent}
+        title="종목 삭제"
+        confirmText="삭제"
+      >
+        <p className="text-sm">
+          <strong className="text-navy">{confirmDelete?.name}</strong> 종목을 삭제할까요?
+        </p>
+        <p className="text-xs text-red-500 mt-2">이 종목의 기존 기록은 그대로 남지만, 더 이상 새로 기록할 수 없습니다.</p>
+      </Modal>
 
       <Modal
         isOpen={showAdd}
