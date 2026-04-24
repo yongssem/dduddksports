@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getEvents, saveEvents } from '../../hooks/useClass'
+import { removeEvent as removeEventDoc } from '../../services/firestore'
 import { generateId } from '../../utils/constants'
 import Modal from '../common/Modal'
 
@@ -47,8 +48,7 @@ export default function EventManager({ classId }) {
 
   async function confirmAndRemoveEvent() {
     if (!confirmDelete) return
-    const all = (await getEvents(classId)).filter(e => e.id !== confirmDelete.id)
-    await saveEvents(classId, all)
+    await removeEventDoc(classId, confirmDelete.id)
     setConfirmDelete(null)
     await refresh()
   }

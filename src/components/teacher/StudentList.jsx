@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getStudents, saveStudents } from '../../hooks/useClass'
-import { updateStudent } from '../../services/firestore'
+import { updateStudent, removeStudent as removeStudentDoc } from '../../services/firestore'
 import { generateId } from '../../utils/constants'
 import Modal from '../common/Modal'
 
@@ -81,9 +81,10 @@ export default function StudentList({ classId }) {
 
   async function confirmAndRemoveStudent() {
     if (!confirmDelete) return
-    const all = (await getStudents(classId)).filter(s => s.id !== confirmDelete.id)
+    await removeStudentDoc(classId, confirmDelete.id)
+    const all = await getStudents(classId)
     all.forEach((s, i) => { s.number = i + 1 })
-    await saveStudents(classId, all)
+    if (all.length > 0) await saveStudents(classId, all)
     setConfirmDelete(null)
     await refresh()
   }
@@ -187,7 +188,6 @@ export default function StudentList({ classId }) {
           </div>
         ) : (
           <div className="space-y-3">
-            {/* 헤더 */}
             <div className="grid grid-cols-[32px_1fr_80px_28px] gap-2 text-xs text-navy/40 font-medium px-1">
               <span>번호</span>
               <span>이름</span>
@@ -195,7 +195,6 @@ export default function StudentList({ classId }) {
               <span></span>
             </div>
 
-            {/* 입력 행들 */}
             <div className="space-y-2 max-h-[50vh] overflow-y-auto">
               {bulkRows.map((row, i) => (
                 <div key={i} className="grid grid-cols-[32px_1fr_80px_28px] gap-2 items-center">
@@ -228,7 +227,6 @@ export default function StudentList({ classId }) {
               ))}
             </div>
 
-            {/* 행 추가 */}
             <button
               onClick={addMoreRows}
               className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-lg text-navy/40 text-sm font-medium hover:border-mint hover:text-mint transition-colors touch-target"
@@ -236,7 +234,6 @@ export default function StudentList({ classId }) {
               + 5행 추가
             </button>
 
-            {/* 등록 버튼 */}
             <button
               onClick={submitBulkStudents}
               disabled={loading || validCount === 0}
